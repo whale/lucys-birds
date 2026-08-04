@@ -1,13 +1,29 @@
 # Dependencies for the Vercel Python function in api/analyze.py.
 #
-# birdnetlib ships the BirdNET model files, so there's nothing to download at
-# runtime and nothing to keep in this repo. Note there is no ffmpeg here on
-# purpose: the browser converts to WAV before upload (see lib/audio.ts), and
-# soundfile reads WAV natively. Adding a format that needs ffmpeg would mean
-# bundling a static binary.
-birdnetlib==0.18.0
-tflite-runtime==2.14.0
-librosa==0.10.2.post1
-soundfile==0.12.1
-numpy==1.26.4
-requests==2.32.3
+# WHY FULL TENSORFLOW AND NOT tflite-runtime:
+#
+# tflite-runtime is the obvious choice — it's ~2 MB against TensorFlow's ~600 MB,
+# and it's what BirdNET-Pi uses. It cannot be used here. Its newest release
+# (2.14.0, October 2023) ships wheels for Python 3.8-3.11 only, and Vercel's
+# Python runtime offers 3.12, 3.13 and 3.14 with no older option. Its successor
+# ai-edge-litert has the same gap. Verified by resolving both against
+# linux x86_64 / cp312: "No matching distribution found".
+#
+# birdnetlib falls back to tensorflow.lite when tflite_runtime is absent, so the
+# full package works. The costs are real and worth knowing:
+#   - the bundle exceeds Vercel's standard 500 MB Python limit, so the project
+#     needs VERCEL_SUPPORT_LARGE_FUNCTIONS=1 (raises it to 5 GB)
+#   - cold starts are slow while TensorFlow loads. Warm invocations are fine,
+#     and get_analyzer() caches the model per instance.
+#
+# If this ever becomes painful, the fix is to move analysis to somewhere that
+# lets you pick Python 3.11 and use tflite-runtime properly.
+#
+# No ffmpeg here on purpose: the browser converts to WAV before upload
+# (lib/audio.ts) and soundfile reads WAV natively.
+
+birdnetlib==0.18.1
+tensorflow==2.20.0
+librosa==0.11.0
+soundfile==0.13.1
+requests==2.32.5

@@ -9,7 +9,16 @@ import { GATE_COOKIE, isValidToken } from "@/lib/gate";
 // rather than being wide open until somebody notices.
 
 export const config = {
-  matcher: ["/add/:path*", "/spot/:path*", "/api/upload-url", "/api/spot", "/api/analyze"],
+  matcher: [
+    "/add/:path*",
+    "/spot/:path*",
+    "/api/upload-url",
+    "/api/spot",
+    "/api/analyze",
+    // Not sensitive — a static species list — but it exists only to serve the
+    // gated /spot page, and leaving it out contradicts the rule above.
+    "/api/species",
+  ],
 };
 
 export async function middleware(request: NextRequest) {

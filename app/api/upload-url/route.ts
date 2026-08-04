@@ -11,6 +11,16 @@ export const runtime = "nodejs";
 type Body = {
   originalName?: string;
   recordedAt?: string;
+  /**
+   * Lucy's local calendar date, "YYYY-MM-DD", as her phone sees it.
+   *
+   * Sent separately because it can't be recovered from `recordedAt` on the
+   * server: that's stored as an instant in UTC, so a 9:30pm recording in
+   * Mountain Time is already "tomorrow" in UTC. BirdNET uses the date to work
+   * out which species are plausible that week, so the wrong day quietly skews
+   * what it's willing to recognise.
+   */
+  localDate?: string;
   durationSeconds?: number;
   lat?: number;
   lon?: number;
@@ -58,6 +68,7 @@ export async function POST(request: Request) {
       storage_path: storagePath,
       original_name: body.originalName ?? null,
       recorded_at: recordedAt.toISOString(),
+      local_date: /^\d{4}-\d{2}-\d{2}$/.test(body.localDate ?? "") ? body.localDate : null,
       duration_seconds: body.durationSeconds ?? null,
       lat: body.lat ?? null,
       lon: body.lon ?? null,

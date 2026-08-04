@@ -33,7 +33,9 @@ Don't "fix" these without knowing why they're here:
 - **Vercel has no `ffmpeg`.** Audio conversion happens in the browser (`lib/audio.ts`) using the platform AAC decoder. Don't move it server-side.
 - **Vercel caps request bodies at 4.5 MB.** Uploads go phone → storage via a signed URL, never through a function. Don't route file bytes through an API route.
 - **Vercel has no persistent disk.** Nothing may be written to the filesystem and expected to survive. Temp files inside a single invocation are fine.
-- **Python functions get 500 MB** uncompressed (5 GB with `VERCEL_SUPPORT_LARGE_FUNCTIONS=1`). The BirdNET deps are chunky; if a deploy fails on size, that env var is the lever.
+- **`tflite-runtime` cannot be used.** Its last release ships wheels for Python 3.8–3.11; Vercel only offers 3.12/3.13/3.14. Successor `ai-edge-litert` has the same gap. Verified by resolving both against linux x86_64 / cp312 — no distribution exists. `api/requirements.txt` uses full `tensorflow` instead, which birdnetlib falls back to. Don't "optimise" it back to tflite-runtime.
+- **The Python bundle needs `VERCEL_SUPPORT_LARGE_FUNCTIONS=1`.** TensorFlow blows past the standard 500 MB Python limit; that env var raises it to 5 GB. `vercel.json` also has `excludeFiles` keeping `avian/` (490 MB of art) out of the function bundle — without it the deploy fails on size no matter what.
+- **`next dev` does not serve `api/analyze.py`.** Root-level Python functions only run under `vercel dev` or a real deployment. Use `pnpm dev:full` when working on the audio path. `app/add/page.tsx` checks the response content-type so this surfaces as a clear message rather than a JSON parse error.
 - **The model load is expensive.** `get_analyzer()` caches it in a module global so warm invocations reuse it. Keep it that way.
 
 ## Data

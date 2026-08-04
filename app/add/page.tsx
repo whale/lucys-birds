@@ -67,6 +67,10 @@ export default function AddRecordingPage() {
         body: JSON.stringify({
           originalName: file.name,
           recordedAt: recordedAtIso,
+          // The calendar date as this phone sees it. The server can't work this
+          // out from recordedAt — that's a UTC instant, and a late evening here
+          // is already tomorrow there. BirdNET's seasonal filter needs the real one.
+          localDate: recordedAt.slice(0, 10),
           durationSeconds,
           lat: lat ? Number(lat) : undefined,
           lon: lon ? Number(lon) : undefined,
@@ -95,8 +99,20 @@ export default function AddRecordingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ recordingId: prep.recordingId }),
       });
+      // `next dev` doesn't serve api/analyze.py — that's a Vercel Python
+      // function, and only `vercel dev` or a real deployment runs it. Without
+      // this check the 404 HTML page hits .json() and surfaces as a JSON parse
+      // error, which says nothing useful about what actually went wrong.
+      if (!analyzed.headers.get("content-type")?.includes("application/json")) {
+        throw new Error(
+          analyzed.status === 404
+            ? "The bird identifier isn't running. It only works on the deployed site, or locally with `vercel dev`."
+            : "The bird identifier didn't answer. Your recording is saved — try again shortly.",
+        );
+      }
+
       const result = await analyzed.json();
-      if (!analyzed.ok) throw new Error(result.error ?? "The analyzer failed.");
+      if (!analyzed.ok) throw new Error(result.error ?? "The identifier couldn't finish. Your recording is saved.");
 
       setFound(result.detections ?? 0);
       setStage("done");

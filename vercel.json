@@ -3,7 +3,8 @@
   "functions": {
     "api/analyze.py": {
       "memory": 2048,
-      "maxDuration": 300
+      "maxDuration": 300,
+      "excludeFiles": "{avian/**,public/**,data/**,model/**,docs/**,.next/**,node_modules/**,supabase/**,scripts/**,app/**,lib/**}"
     }
   }
 }

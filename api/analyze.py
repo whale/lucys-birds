@@ -70,7 +70,7 @@ def analyze(recording_id):
         f"{base}/rest/v1/recordings",
         params={
             "id": f"eq.{recording_id}",
-            "select": "id,storage_path,recorded_at,lat,lon",
+            "select": "id,storage_path,recorded_at,local_date,lat,lon",
         },
         headers=rest_headers(),
         timeout=30,
@@ -103,7 +103,16 @@ def analyze(recording_id):
 
         from birdnetlib import Recording
 
-        kwargs = {"min_conf": MIN_CONFIDENCE, "date": recorded_at.date()}
+        # Prefer the date Lucy's phone reported. recorded_at.date() is the UTC
+        # date, which is already tomorrow for anything recorded late evening in
+        # a western timezone — and BirdNET uses this to decide which species are
+        # plausible this week. Falling back to UTC beats refusing to analyse.
+        if recording_row.get("local_date"):
+            analysis_date = datetime.date.fromisoformat(recording_row["local_date"])
+        else:
+            analysis_date = recorded_at.date()
+
+        kwargs = {"min_conf": MIN_CONFIDENCE, "date": analysis_date}
         # Location is optional but a big accuracy win: it drops species that
         # aren't plausible where Lucy is, that week of the year.
         if recording_row.get("lat") is not None and recording_row.get("lon") is not None:
