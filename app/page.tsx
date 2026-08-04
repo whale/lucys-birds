@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { serviceClient } from "@/lib/supabase";
+import speciesData from "@/data/species.json";
 
 export const dynamic = "force-dynamic";
+
+// Only 329 of 7,058 species have artwork, so most birds Lucy adds won't have a
+// picture. Knowing that up front lets us draw a placeholder instead of letting
+// the browser show a broken-image icon, which reads as "this went wrong".
+const ILLUSTRATED = new Set(
+  (speciesData as Array<{ sci: string; art: boolean }>)
+    .filter((s) => s.art)
+    .map((s) => s.sci),
+);
 
 type Species = {
   sci_name: string;
@@ -32,10 +42,14 @@ export default async function CollagePage() {
     if (error) throw error;
     species = (data ?? []) as Species[];
   } catch (cause) {
-    // Say what actually broke. A blank page that looks like "no birds yet" when
-    // the database is unreachable is the worst possible failure here.
-    loadError = cause instanceof Error ? cause.message : String(cause);
+    // The detail goes to the server log where it's useful; Lucy gets a sentence
+    // she can act on. A blank page that looks like "no birds yet" when the
+    // database is unreachable would be the worst of both.
+    console.error("life_list query failed", cause);
+    loadError = "Couldn't reach the birds right now. Try again in a moment.";
   }
+
+  const sightings = species.reduce((sum, s) => sum + s.times_seen, 0);
 
   return (
     <main className="page">
@@ -44,8 +58,8 @@ export default async function CollagePage() {
         <div className="meta">
           {species.length > 0 && (
             <span>
-              {species.length} species &middot;{" "}
-              {species.reduce((sum, s) => sum + s.times_seen, 0)} sightings
+              {species.length} {species.length === 1 ? "species" : "species"} &middot;{" "}
+              {sightings} {sightings === 1 ? "sighting" : "sightings"}
             </span>
           )}
         </div>
@@ -61,7 +75,7 @@ export default async function CollagePage() {
 
       {loadError && (
         <p className="notice notice-error" style={{ marginTop: "2rem" }}>
-          Couldn&rsquo;t load the birds: {loadError}
+          {loadError}
         </p>
       )}
 
@@ -76,12 +90,18 @@ export default async function CollagePage() {
         <ul className="flock">
           {species.map((s) => (
             <li className="bird" key={s.sci_name}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`/illustrations/${slug(s.sci_name)}.png`}
-                alt={s.com_name}
-                loading="lazy"
-              />
+              {ILLUSTRATED.has(s.sci_name) ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={`/illustrations/${slug(s.sci_name)}.png`}
+                  alt={s.com_name}
+                  loading="lazy"
+                />
+              ) : (
+                <div className="bird-noart" aria-hidden="true">
+                  🪶
+                </div>
+              )}
               <span className="com">{s.com_name}</span>
               <span className="sci">{s.sci_name}</span>
               <span className="count">

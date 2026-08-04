@@ -46,8 +46,12 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
+    // Postgres error text belongs in the log, not in front of a child.
     console.error("spot insert failed", error);
-    return NextResponse.json({ error: `Could not save it: ${error.message}` }, { status: 502 });
+    return NextResponse.json(
+      { error: "That didn't save. Check your signal and try again." },
+      { status: 502 },
+    );
   }
 
   return NextResponse.json({ id: data.id });

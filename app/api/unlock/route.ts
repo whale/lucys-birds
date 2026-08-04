@@ -1,33 +1,53 @@
 import { NextResponse } from "next/server";
 import { GATE_COOKIE, isCorrectPasscode, issueToken } from "@/lib/gate";
+import { serviceClient } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
-// Crude in-memory rate limit. A six-digit code is 1,000,000 guesses, which a
-// script gets through quickly if nothing slows it down. This won't survive a
-// deploy or work across instances — it's a speed bump, not a lock — but it
-// turns a trivial brute force into an impractical one.
-const attempts = new Map<string, { count: number; resetAt: number }>();
-const WINDOW_MS = 15 * 60 * 1000;
-const MAX_ATTEMPTS = 10;
+/**
+ * The caller's IP, taken from the header Vercel's proxy sets rather than the
+ * one the client can write.
+ *
+ * `x-forwarded-for` is appended to by every hop, so its FIRST entry is whatever
+ * the client claimed — trivially spoofed, and using it turns a rate limit into
+ * decoration. `x-real-ip` is set by Vercel itself; the last x-forwarded-for
+ * entry is the nearest trusted hop and is the fallback.
+ */
+function callerIp(request: Request): string {
+  const real = request.headers.get("x-real-ip");
+  if (real) return real.trim();
 
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const record = attempts.get(ip);
-
-  if (!record || now > record.resetAt) {
-    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
+  const chain = request.headers.get("x-forwarded-for");
+  if (chain) {
+    const hops = chain.split(",").map((h) => h.trim()).filter(Boolean);
+    if (hops.length > 0) return hops[hops.length - 1];
   }
 
-  record.count += 1;
-  return record.count > MAX_ATTEMPTS;
+  return "unknown";
 }
 
 export async function POST(request: Request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = callerIp(request);
+  const supabase = serviceClient();
 
-  if (rateLimited(ip)) {
+  // Shared store, not an in-memory Map: serverless runs many instances and each
+  // would otherwise hold its own counter, so spreading guesses across enough
+  // concurrent requests would reset the limit every time.
+  const { data: blocked, error: blockError } = await supabase.rpc("unlock_is_blocked", {
+    p_ip: ip,
+  });
+
+  if (blockError) {
+    // Fail closed. If we can't tell whether this is an attack, refusing is the
+    // safe answer — the cost is Lucy retrying, not someone getting in.
+    console.error("unlock_is_blocked failed", blockError);
+    return NextResponse.json(
+      { error: "Can't check that right now. Try again in a moment." },
+      { status: 503 },
+    );
+  }
+
+  if (blocked) {
     return NextResponse.json(
       { error: "Too many tries. Wait a few minutes and try again." },
       { status: 429 },
@@ -41,7 +61,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Expected a JSON body." }, { status: 400 });
   }
 
-  if (!isCorrectPasscode(passcode)) {
+  const correct = isCorrectPasscode(passcode);
+  // Record before responding, so a failure can't be retried faster than it's counted.
+  await supabase.from("unlock_attempts").insert({ ip, ok: correct });
+
+  if (!correct) {
     return NextResponse.json({ error: "That's not the right code." }, { status: 401 });
   }
 

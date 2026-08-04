@@ -52,7 +52,9 @@ function UnlockForm() {
           autoFocus
           required
         />
-        <span className="hint">You only need this once on each device.</span>
+        <span className="hint">
+          You only need this once on each device. Ask a grown-up if you don&rsquo;t know it.
+        </span>
       </label>
 
       <div>

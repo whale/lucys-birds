@@ -10,7 +10,7 @@ const STAGE_LABEL: Record<Stage, string> = {
   idle: "",
   converting: "Reading the recording…",
   uploading: "Sending it up…",
-  analyzing: "Listening for birds… this can take a minute.",
+  analyzing: "Listening for birds… this can take a minute. Keep this page open.",
   done: "Done.",
   error: "",
 };
@@ -83,7 +83,11 @@ export default function AddRecordingPage() {
         headers: { "Content-Type": "audio/wav" },
         body: wav,
       });
-      if (!put.ok) throw new Error(`Upload failed (${put.status}). Check your connection and try again.`);
+      if (!put.ok) {
+        // Status code goes to the console for us, not to the screen for her.
+        console.error("storage PUT failed", put.status, await put.text().catch(() => ""));
+        throw new Error("The upload didn't finish. Check your signal and try again.");
+      }
 
       setStage("analyzing");
       const analyzed = await fetch("/api/analyze", {

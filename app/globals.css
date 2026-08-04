@@ -77,16 +77,23 @@ button[disabled] {
   cursor: not-allowed;
 }
 
-.button-primary {
+/* Needs the element in the selector: `a.button, button` above is specificity
+   0-1-1, so a bare `.button-primary` (0-1-0) loses to it and the fill silently
+   never applies — the main action ends up looking identical to the secondary. */
+a.button-primary,
+button.button-primary {
   background: var(--ink);
   color: var(--ground);
+  border-color: var(--ink);
 }
 
 /* ---------------------------------------------------------------- collage */
 
 .flock {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  /* 8.5rem fits two per row on a 375px phone, which a collage wants — one
+     enormous bird per screen reads as a list, not a collection. */
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   gap: 1.5rem 1rem;
   margin-top: 2.5rem;
   padding: 0;
@@ -103,6 +110,21 @@ button[disabled] {
   height: 9rem;
   object-fit: contain;
   mix-blend-mode: multiply; /* cutouts carry a little cream; multiply hides the seam */
+}
+
+/* Only 329 of 7,058 species have artwork, so most birds Lucy adds won't have a
+   picture. A broken-image icon reads as "something went wrong"; this reads as
+   "this one's waiting for its portrait". */
+.bird-noart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 9rem;
+  border: 1px dashed var(--rule);
+  border-radius: 0.5rem;
+  color: var(--ink-soft);
+  font-size: 2.5rem;
+  line-height: 1;
 }
 
 .bird .com {

@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   if (signError || !signed) {
     console.error("createSignedUploadUrl failed", signError);
     return NextResponse.json(
-      { error: `Could not prepare the upload: ${signError?.message ?? "unknown error"}` },
+      { error: "Couldn't start the upload. Check your signal and try again." },
       { status: 502 },
     );
   }
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   if (insertError || !recording) {
     console.error("recordings insert failed", insertError);
     return NextResponse.json(
-      { error: `Could not save the recording: ${insertError?.message ?? "unknown error"}` },
+      { error: "Couldn't save the recording. Check your signal and try again." },
       { status: 502 },
     );
   }
