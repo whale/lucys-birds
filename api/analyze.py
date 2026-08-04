@@ -116,13 +116,14 @@ def analyze(recording_id):
 
     rows_to_insert = [
         {
+            "source": "heard",
             "recording_id": recording_id,
             "sci_name": d["scientific_name"],
             "com_name": d["common_name"],
             "confidence": round(float(d["confidence"]), 4),
             "start_seconds": float(d["start_time"]),
             "end_seconds": float(d["end_time"]),
-            "detected_at": (
+            "seen_at": (
                 recorded_at + datetime.timedelta(seconds=float(d["start_time"]))
             ).isoformat(),
         }
@@ -131,7 +132,7 @@ def analyze(recording_id):
 
     if rows_to_insert:
         requests.post(
-            f"{base}/rest/v1/detections",
+            f"{base}/rest/v1/sightings",
             headers=rest_headers(),
             json=rows_to_insert,
             timeout=60,

@@ -6,10 +6,13 @@ export const dynamic = "force-dynamic";
 type Species = {
   sci_name: string;
   com_name: string;
+  times_seen: number;
+  times_spotted: number;
   times_heard: number;
-  first_heard: string;
-  last_heard: string;
-  best_confidence: number;
+  first_seen: string;
+  last_seen: string;
+  best_confidence: number | null;
+  ever_spotted: boolean;
 };
 
 /** "Cyanocitta cristata" -> "cyanocitta-cristata", which is how the illustrations are named. */
@@ -25,7 +28,7 @@ export default async function CollagePage() {
     const { data, error } = await serviceClient()
       .from("life_list")
       .select("*")
-      .order("first_heard", { ascending: true });
+      .order("first_seen", { ascending: true });
     if (error) throw error;
     species = (data ?? []) as Species[];
   } catch (cause) {
@@ -41,11 +44,16 @@ export default async function CollagePage() {
         <div className="meta">
           {species.length > 0 && (
             <span>
-              {species.length} {species.length === 1 ? "species" : "species"} &middot;{" "}
-              {species.reduce((sum, s) => sum + s.times_heard, 0)} calls
+              {species.length} species &middot;{" "}
+              {species.reduce((sum, s) => sum + s.times_seen, 0)} sightings
             </span>
-          )}{" "}
-          <Link className="button button-primary" href="/add">
+          )}
+        </div>
+        <div className="actions">
+          <Link className="button button-primary" href="/spot">
+            Add a bird you saw
+          </Link>
+          <Link className="button" href="/add">
             Add a recording
           </Link>
         </div>
@@ -59,8 +67,8 @@ export default async function CollagePage() {
 
       {!loadError && species.length === 0 && (
         <p className="empty">
-          Nothing here yet. Record a bird on your phone, then tap{" "}
-          <Link href="/add">Add a recording</Link>.
+          No birds yet. Add one you&rsquo;ve <Link href="/spot">seen</Link>, or upload a{" "}
+          <Link href="/add">recording</Link> and let it work out what it was.
         </p>
       )}
 
@@ -77,7 +85,13 @@ export default async function CollagePage() {
               <span className="com">{s.com_name}</span>
               <span className="sci">{s.sci_name}</span>
               <span className="count">
-                heard {s.times_heard}&times;
+                {/* Say how she got it. "Spotted" is Lucy's own record and
+                    deserves to read differently from a machine guess. */}
+                {s.ever_spotted && s.times_heard === 0
+                  ? `spotted ${s.times_spotted}×`
+                  : s.ever_spotted
+                    ? `seen ${s.times_seen}×`
+                    : `heard ${s.times_heard}×`}
               </span>
             </li>
           ))}

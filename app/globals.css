@@ -175,3 +175,58 @@ textarea {
   text-align: center;
   color: var(--ink-soft);
 }
+
+/* ----------------------------------------------------------- species picker */
+
+.picker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.picker button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.75rem 0.875rem;
+  /* Comfortably past the 44px minimum touch target — this is the control a
+     child taps outdoors, one-handed, probably in a hurry. */
+  min-height: 3.25rem;
+}
+
+.picker button:hover,
+.picker button:focus-visible {
+  border-color: var(--ink);
+}
+
+.picker-name {
+  display: block;
+  font-size: 1.0625rem;
+}
+
+.picker-sci {
+  display: block;
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.picker-flag {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.actions {
+  display: flex;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}

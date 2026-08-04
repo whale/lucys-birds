@@ -1,8 +1,14 @@
 # Lucy's Birds
 
-*A place for Lucy to keep the birds she's heard.*
+*A place for Lucy to keep the birds she finds.*
 
-Record a bird on an iPhone. Send it here. A model called BirdNET (from the Cornell Lab of Ornithology) works out what it was, and the bird joins a collage of everything she's collected. The recording is kept — it's hers, not just raw material for the machine.
+Two ways a bird gets onto the list:
+
+**She saw it.** Type the name, pick it, done.
+
+**She recorded it.** Record on an iPhone, send it here, and a model called BirdNET (from the Cornell Lab of Ornithology) works out what it was. The recording is kept — it's hers, not just raw material for the machine.
+
+Both land in the same list, because it's her list however each bird got on it.
 
 Working name. It'll get a better one.
 
@@ -11,28 +17,31 @@ Working name. It'll get a better one.
 ## How it works
 
 ```
-Voice Memos on the iPhone
-  -> share to this site
-  -> the browser converts the audio to WAV
-  -> uploaded straight to storage
-  -> BirdNET identifies what's in it
-  -> results saved to the database
-  -> the collage redraws
+saw a bird                        recorded a bird
+  -> search by name                 -> share from Voice Memos
+  -> pick it                        -> browser converts to WAV
+                                    -> straight to storage
+                                    -> BirdNET identifies it
+        \                          /
+         -> saved as a sighting <-
+         -> the collage redraws
 ```
 
-Nobody types in a bird name. Lucy picks a recording; everything after that is automatic. She can reject a wrong guess afterwards.
+She can reject a wrong machine guess; it drops off the list.
 
 ### Where each piece lives
 
 | Piece | What it does | File |
 |---|---|---|
 | Collage | The page of birds | `app/page.tsx` |
-| Add page | What Lucy uses on her phone | `app/add/page.tsx` |
+| Add a bird she saw | Search and pick | `app/spot/page.tsx` |
+| Add a recording | What she uses on her phone | `app/add/page.tsx` |
+| Species search | Type-ahead over 7,058 species | `app/api/species/route.ts` |
 | Audio conversion | `.m4a` to WAV, in the browser | `lib/audio.ts` |
 | Upload | Hands out a direct-to-storage link | `app/api/upload-url/route.ts` |
 | Analyzer | Runs BirdNET on one recording | `api/analyze.py` |
 | Read API | Feeds the collage | `app/api/birds/route.ts` |
-| Database shape | Two tables and a view | `supabase/schema.sql` |
+| Database shape | Two tables and a view | `supabase/migrations/` |
 
 ### Two design decisions worth knowing
 
@@ -44,7 +53,7 @@ Nobody types in a bird name. Lucy picks a recording; everything after that is au
 
 ## Running it locally
 
-You need a free [Supabase](https://supabase.com) project first — that's the database and the file storage.
+The Supabase project already exists (`lucys-birds`, ref `elmxrscgpdtiqgpltchm`). It holds the database and the audio files.
 
 1. Install the dependencies:
    ```bash
@@ -54,13 +63,22 @@ You need a free [Supabase](https://supabase.com) project first — that's the da
    ```bash
    pnpm illustrations
    ```
-3. Copy `.env.example` to `.env.local` and fill in the two Supabase values.
-4. In Supabase, open the SQL editor and run everything in `supabase/schema.sql`.
-5. In Supabase, create a **storage bucket** named `recordings`, set to private.
-6. Start it:
+3. Copy `.env.example` to `.env.local` and fill in the two Supabase values from
+   the project's API settings.
+4. Start it:
    ```bash
    pnpm dev
    ```
+
+The database schema lives in `supabase/migrations/`. It's already applied. To
+change it, add a new migration and run `supabase db push` — don't edit the
+existing one.
+
+Rebuild the species picker data after changing illustrations or labels:
+
+```bash
+node scripts/build-species.mjs
+```
 
 The analyzer (`api/analyze.py`) only runs on Vercel — it needs the Python runtime. Locally, uploads will save but not identify. Use `vercel dev` if you need the full loop on your machine.
 

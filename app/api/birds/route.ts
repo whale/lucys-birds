@@ -24,7 +24,7 @@ export async function GET(request: Request) {
         const { data, error } = await supabase
           .from("life_list")
           .select("*")
-          .order("first_heard", { ascending: true });
+          .order("first_seen", { ascending: true });
         if (error) throw error;
         return NextResponse.json({ species: data ?? [], as_of: new Date().toISOString() });
       }
@@ -33,24 +33,24 @@ export async function GET(request: Request) {
         const hours = Math.max(1, Math.min(24 * 365 * 20, Number(url.searchParams.get("hours") ?? 24)));
         const since = new Date(Date.now() - hours * 3600_000).toISOString();
         const { data, error } = await supabase
-          .from("detections")
-          .select("sci_name, com_name, confidence, detected_at, recording_id")
-          .gte("detected_at", since)
+          .from("sightings")
+          .select("sci_name, com_name, source, confidence, seen_at, recording_id")
+          .gte("seen_at", since)
           .not("confirmed", "is", false)
-          .order("detected_at", { ascending: false });
+          .order("seen_at", { ascending: false });
         if (error) throw error;
-        return NextResponse.json({ detections: data ?? [], as_of: new Date().toISOString() });
+        return NextResponse.json({ sightings: data ?? [], as_of: new Date().toISOString() });
       }
 
       case "stats": {
-        const [{ count: totalDetections }, { data: species }, { count: totalRecordings }] =
+        const [{ count: totalSightings }, { data: species }, { count: totalRecordings }] =
           await Promise.all([
-            supabase.from("detections").select("*", { count: "exact", head: true }),
+            supabase.from("sightings").select("*", { count: "exact", head: true }),
             supabase.from("life_list").select("sci_name"),
             supabase.from("recordings").select("*", { count: "exact", head: true }),
           ]);
         return NextResponse.json({
-          detections: totalDetections ?? 0,
+          sightings: totalSightings ?? 0,
           species: species?.length ?? 0,
           recordings: totalRecordings ?? 0,
           as_of: new Date().toISOString(),
