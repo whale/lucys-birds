@@ -57,3 +57,19 @@ whitelist_species_list.txt
 avian/assets/references/
 # Superseded assets retained locally
 avian/assets/_legacy/
+
+# --- Lucy's Birds: Next.js app ---
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Secrets. .env.example is the tracked template; .env.local never is.
+.env
+.env.local
+.env*.local
+.vercel
+
+# Generated: built from avian/assets by scripts/build-illustrations.mjs
+public/illustrations/

@@ -1,0 +1,13 @@
+# Dependencies for the Vercel Python function in api/analyze.py.
+#
+# birdnetlib ships the BirdNET model files, so there's nothing to download at
+# runtime and nothing to keep in this repo. Note there is no ffmpeg here on
+# purpose: the browser converts to WAV before upload (see lib/audio.ts), and
+# soundfile reads WAV natively. Adding a format that needs ffmpeg would mean
+# bundling a static binary.
+birdnetlib==0.18.0
+tflite-runtime==2.14.0
+librosa==0.10.2.post1
+soundfile==0.12.1
+numpy==1.26.4
+requests==2.32.3

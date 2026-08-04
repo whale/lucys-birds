@@ -1,119 +1,86 @@
-# AvianVisitors
+# Lucy's Birds
 
-*A live bird collage from your window.*
+*A place for Lucy to keep the birds she's heard.*
 
-See it running at [bird.onethreenine.net](https://bird.onethreenine.net).
+Record a bird on an iPhone. Send it here. A model called BirdNET (from the Cornell Lab of Ornithology) works out what it was, and the bird joins a collage of everything she's collected. The recording is kept — it's hers, not just raw material for the machine.
 
-<img alt="avianvisitors collage" src="docs/thumb.png" />
-
----
-
-## BOM
-
-| Qty | Description | Price | Link | Notes |
-|-----|-------------|-------|------| ----- |
-| 1 | Raspberry Pi (4B / 5 / 3A+ / Zero 2W) | ~$25-80 | [Amazon](https://amzn.to/43yLDZJ) | [See note for 512 MB Pis](https://github.com/mcguirepr89/BirdNET-Pi/wiki/RPi0W2-Installation-Guide) |
-| 1 | Micro SD Card (≥32 GB) | ~$10 | [Amazon](https://amzn.to/4eGy7te) | |
-| 1 | USB lavalier microphone | $16.95 | [Amazon](https://amzn.to/4vLSaMK) | |
-| 1 | Pi power supply | ~$10 | - | |
-
-Optional: a [Gemini API key](https://aistudio.google.com/apikey) to restyle illustrations, an [eBird API key](https://ebird.org/api/keygen) to filter species by region.
-
-### Kits
-
-I offer the bird mic and the wall frame as separate electronics kits. I put up a store for some of my open-source projects and will soon be able to offer kits cheaper than buying all the components individually, once I start buying in bulk.
-
-- [Bird mic kit](https://theodore.net/store/avian-mic/)
-- [Frame kit](https://theodore.net/store/avian-visitors/)
+Working name. It'll get a better one.
 
 ---
 
-## 1. Flash the SD card
-
-Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/). Pick Raspberry Pi OS Lite (64-bit). In the customisation dialog set:
-
-- Username
-- WiFi SSID + password
-- Hostname: `birdnet`
-- Enable SSH with password auth
-
-Plug the USB mic into the Pi. Place the capsule in a window or mount it outside. Boot.
-
----
-
-## 2. Run the installer
-
-Installer assumes passwordless sudo (Raspberry Pi OS Lite default - if you've tightened it, run `sudo raspi-config` -> *System Options* -> restore the default first).
-
-```bash
-ssh <your-username>@birdnet.local
-curl -s https://raw.githubusercontent.com/Twarner491/AvianVisitors/avian-visitors/newinstaller.sh | bash
-```
-
-Clones this fork, installs BirdNET-Pi, symlinks the AvianVisitors overlay into the Caddy web root. Takes 20-40 minutes. Reboots when done.
-
-Collage: `http://birdnet.local/`. Stock BirdNET-Pi UI: `http://birdnet.local/index.php`. The menu button in the top right opens an admin overlay with settings, system, log, and tool panels.
-
----
-
-## 3. (Optional) Restyle the illustrations
-
-The repo ships with 666 bundled illustrations (333 species, perched + flight). To restyle them or generate a set for your own region:
-
-```bash
-pip install -r ~/BirdNET-Pi/avian/scripts/requirements.txt
-export GEMINI_API_KEY='your-key'  # image generation requires billing enabled
-
-# generate on a cream ground, cut the ground off, rebuild the collage masks
-python3 ~/BirdNET-Pi/avian/scripts/pregen.py --labels ~/BirdNET-Pi/model/labels.txt --force
-python3 ~/BirdNET-Pi/avian/scripts/cutout.py
-python3 ~/BirdNET-Pi/avian/scripts/build_masks.py
-```
-
-Filter to your region with `--ebird-region US-CA` (needs `EBIRD_API_KEY`). The full pipeline, prompt, reference images, and per-species tuning live in [`avian/scripts/README.md`](avian/scripts/README.md). Style lives in [`prompt.template.md`](avian/scripts/prompt.template.md).
-
-See [illustration bundles](illustration-bundles.md) for pregenerated bundles shared by other folks in the community, or share your own for others to use!
-
----
-
-## 4. (Optional) Forward off your LAN
-
-See [`avian/forwarding/`](avian/forwarding/) for three independent recipes:
-
-- **Cloudflare Tunnel** for a public HTTPS URL.
-- **Home Assistant REST sensor** that exposes the latest detection.
-- **MQTT bridge** that publishes every new detection.
-
----
-
-## Repo layout
+## How it works
 
 ```
-avian/                  # everything we add to BirdNET-Pi
-├── frontend/           # static HTML/JS/CSS for the collage
-├── assets/             # 666 bundled illustrations + photo-cutout fallbacks
-├── api/                # PHP shims served by BirdNET-Pi's PHP-FPM
-├── scripts/            # generate -> cutout -> masks pipeline + prompt
-└── forwarding/         # optional HA / MQTT / Cloudflare configs
-frame/                  # optional e-ink wall display
+Voice Memos on the iPhone
+  -> share to this site
+  -> the browser converts the audio to WAV
+  -> uploaded straight to storage
+  -> BirdNET identifies what's in it
+  -> results saved to the database
+  -> the collage redraws
 ```
 
-Everything outside `avian/` and `frame/` is upstream BirdNET-Pi.
+Nobody types in a bird name. Lucy picks a recording; everything after that is automatic. She can reject a wrong guess afterwards.
+
+### Where each piece lives
+
+| Piece | What it does | File |
+|---|---|---|
+| Collage | The page of birds | `app/page.tsx` |
+| Add page | What Lucy uses on her phone | `app/add/page.tsx` |
+| Audio conversion | `.m4a` to WAV, in the browser | `lib/audio.ts` |
+| Upload | Hands out a direct-to-storage link | `app/api/upload-url/route.ts` |
+| Analyzer | Runs BirdNET on one recording | `api/analyze.py` |
+| Read API | Feeds the collage | `app/api/birds/route.ts` |
+| Database shape | Two tables and a view | `supabase/schema.sql` |
+
+### Two design decisions worth knowing
+
+**The audio is converted in the browser, not on the server.** Vercel has no `ffmpeg`, but Safari already decodes the iPhone's own audio format. Converting on the phone costs nothing and removes a whole dependency.
+
+**The upload skips the server entirely.** Vercel refuses request bodies over 4.5 MB, which a long recording exceeds. The phone gets a one-time signed link and sends the file straight to storage.
 
 ---
 
-## Wall frame
+## Running it locally
 
-An optional e-ink frame mirrors the last 24h of birds onto a panel by your window. Build it from [`frame/`](frame/README.md). It can run off your own BirdNET mic, or standalone from BirdWeather data for any ZIP code with no mic at all.
+You need a free [Supabase](https://supabase.com) project first — that's the database and the file storage.
+
+1. Install the dependencies:
+   ```bash
+   pnpm install
+   ```
+2. Build the bird pictures (one time, takes a few minutes):
+   ```bash
+   pnpm illustrations
+   ```
+3. Copy `.env.example` to `.env.local` and fill in the two Supabase values.
+4. In Supabase, open the SQL editor and run everything in `supabase/schema.sql`.
+5. In Supabase, create a **storage bucket** named `recordings`, set to private.
+6. Start it:
+   ```bash
+   pnpm dev
+   ```
+
+The analyzer (`api/analyze.py`) only runs on Vercel — it needs the Python runtime. Locally, uploads will save but not identify. Use `vercel dev` if you need the full loop on your machine.
 
 ---
 
-## License
+## Where this came from
 
-CC-BY-NC-SA-4.0, inherited from [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET-Pi/blob/main/LICENSE). Non-commercial use only. See the [BirdNET-Pi README](https://github.com/Nachtzuster/BirdNET-Pi/blob/main/README.md) for full Cornell attribution.
+Forked from [AvianVisitors](https://github.com/Twarner491/AvianVisitors) by Theodore Warner, which is itself a fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET-Pi).
 
----
+The original is a Raspberry Pi with a microphone in a window, listening around the clock. This version has no Pi and no microphone — the recordings come from a phone, on purpose, so that Lucy is the one choosing what gets collected.
 
-- [Fork this repository](https://github.com/Twarner491/AvianVisitors/fork)
-- [Watch this repo](https://github.com/Twarner491/AvianVisitors/subscription)
-- [Create issue](https://github.com/Twarner491/AvianVisitors/issues/new)
+What's kept from the original:
+
+- `avian/assets/` — 666 hand-styled illustrations (333 species, perched and in flight) and 157 photo cutouts
+- `avian/frontend/` — the original collage engine, kept as reference for the layout port
+- `avian/scripts/` — the pipeline that generates new illustrations in the same style
+- `model/*_Labels.txt` — the species lists that pipeline reads
+
+Everything Pi-shaped — the recording daemon, the folder watcher, SQLite, PHP, Caddy, the systemd services, the installer, the e-ink frame — was removed. It's all still in the git history if it's ever wanted.
+
+**Licence: CC-BY-NC-SA-4.0**, inherited from BirdNET-Pi. Non-commercial only, attribution required, share alike. See `README.upstream.md` and `LICENSE`.
+
+BirdNET is by the [K. Lisa Yang Center for Conservation Bioacoustics](https://birdnet.cornell.edu/) at the Cornell Lab of Ornithology and Chemnitz University of Technology.
