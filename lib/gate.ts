@@ -61,3 +61,22 @@ export function isCorrectPasscode(submitted: string): boolean {
   }
   return safeEqual(submitted.trim(), expected);
 }
+
+/**
+ * Check the key in Lucy's bookmarked link.
+ *
+ * Deliberately NOT the 6-digit passcode. A link key skips the unlock form, and
+ * with it the rate limiting that makes a short code safe — a six-digit number
+ * appended to a URL is a million guesses with nothing slowing them down. This
+ * is a long random string instead, so guessing isn't a threat and no rate limit
+ * is needed on the path.
+ *
+ * It does end up in server access logs and browser history, which is why it's
+ * separate: rotating it costs Lucy one new bookmark and doesn't change the
+ * passcode anyone else uses.
+ */
+export function isValidLinkKey(submitted: string): boolean {
+  const expected = process.env.GATE_LINK_KEY;
+  if (!expected || expected.length < 24) return false;
+  return safeEqual(submitted, expected);
+}
