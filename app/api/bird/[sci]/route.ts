@@ -16,30 +16,45 @@ async function lookup(title: string): Promise<string | null> {
       {
         // Wikipedia's policy requires a descriptive User-Agent; without one it
         // throttles, and from a shared serverless IP that means silence.
-        headers: { "User-Agent": "LucysBirds/1.0 (https://lucys-birds.vercel.app)" },
+        headers: {
+          "User-Agent": "LucysBirds/1.0 (https://lucys-birds.vercel.app)",
+        },
         next: { revalidate: 86400 },
       },
     );
     if (!response.ok) return null;
     const data = await response.json();
-    return typeof data.extract === "string" && data.extract.length > 0 ? data.extract : null;
+    return typeof data.extract === "string" && data.extract.length > 0
+      ? data.extract
+      : null;
   } catch {
     return null;
   }
 }
 
-export async function GET(_request: Request, { params }: { params: Promise<{ sci: string }> }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ sci: string }> },
+) {
   const sciSlug = (await params).sci.toLowerCase();
   const supabase = serviceClient();
 
-  const { data: birds, error } = await supabase.from("birds").select("id, sci_name, com_name, added_at");
+  const { data: birds, error } = await supabase
+    .from("birds")
+    .select("id, sci_name, com_name, added_at");
   if (error) {
     console.error("bird lookup failed", error);
-    return NextResponse.json({ error: "Couldn't load that bird." }, { status: 502 });
+    return NextResponse.json(
+      { error: "Couldn't load that bird." },
+      { status: 502 },
+    );
   }
 
-  const bird = (birds ?? []).find((b) => b.sci_name.toLowerCase().replace(/\s+/g, "-") === sciSlug);
-  if (!bird) return NextResponse.json({ error: "No such bird." }, { status: 404 });
+  const bird = (birds ?? []).find(
+    (b) => b.sci_name.toLowerCase().replace(/\s+/g, "-") === sciSlug,
+  );
+  if (!bird)
+    return NextResponse.json({ error: "No such bird." }, { status: 404 });
 
   const { data: recordings } = await supabase
     .from("bird_recordings")
@@ -56,6 +71,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ sci
     description: await lookup(bird.sci_name),
     recordings: recordings ?? [],
     audioBase: `${process.env.SUPABASE_URL}/storage/v1/object/public/${RECORDINGS_BUCKET}`,
-    links: { wikipedia: wikipediaUrl(bird.sci_name), ebird: ebirdUrl(bird.com_name) },
+    links: {
+      wikipedia: wikipediaUrl(bird.sci_name),
+      ebird: ebirdUrl(bird.com_name),
+    },
   });
 }

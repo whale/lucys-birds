@@ -33,6 +33,19 @@ export function hasFlight(sciName: string): boolean {
   return FLIGHT.has(sciName);
 }
 
+const BY_SCI = new Map(ALL.map((s) => [s.sci, s]));
+
+/**
+ * Resolve a scientific name to the known species, or null.
+ *
+ * The add endpoint uses this so the database only ever holds real names taken
+ * from our own list, never a string a client made up. Without it, whatever was
+ * posted ended up rendered on a public page.
+ */
+export function findSpecies(sciName: string): Species | null {
+  return BY_SCI.get(sciName.trim()) ?? null;
+}
+
 const ASPECT = new Map(
   ALL.filter((s) => s.ar).map((s) => [s.sci, s.ar as number]),
 );

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { RECORDINGS_BUCKET, serviceClient } from "@/lib/supabase";
+import { findSpecies } from "@/lib/species";
 
 // Add a bird to the collection, and if a song came with it, hand back a
 // one-time link to upload it straight to storage.
@@ -25,11 +26,29 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Expected a JSON body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Expected a JSON body." },
+      { status: 400 },
+    );
   }
 
   if (!body.sciName || !body.comName) {
-    return NextResponse.json({ error: "Pick a bird from the list first." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Pick a bird from the list first." },
+      { status: 400 },
+    );
+  }
+
+  // Names come from our own species list, never from the request. The client
+  // only chooses WHICH species; it doesn't get to supply the text. Anything
+  // stored here is rendered on a public page, so trusting the body would let a
+  // caller put arbitrary content in front of every visitor.
+  const species = findSpecies(body.sciName);
+  if (!species) {
+    return NextResponse.json(
+      { error: "That isn't a bird we know. Pick one from the list." },
+      { status: 400 },
+    );
   }
 
   const supabase = serviceClient();
@@ -40,14 +59,16 @@ export async function POST(request: Request) {
     .from("birds")
     .upsert(
       {
-        sci_name: body.sciName,
-        com_name: body.comName,
+        sci_name: species.sci,
+        com_name: species.com,
         // Only overwrite a location when one was actually supplied, so
         // re-adding a bird to attach a song doesn't wipe where she found it.
         ...(Number.isFinite(body.lat) && Number.isFinite(body.lon)
           ? { lat: body.lat, lon: body.lon }
           : {}),
-        ...(body.place?.trim() ? { place: body.place.trim() } : {}),
+        ...(body.place?.trim()
+          ? { place: body.place.trim().slice(0, 120) }
+          : {}),
       },
       { onConflict: "sci_name" },
     )
@@ -77,7 +98,11 @@ export async function POST(request: Request) {
     console.error("createSignedUploadUrl failed", signError);
     // The bird is saved; only the song failed. Say exactly that.
     return NextResponse.json(
-      { birdId: bird.id, comName: bird.com_name, audioError: "The bird was added, but the song couldn't upload." },
+      {
+        birdId: bird.id,
+        comName: bird.com_name,
+        audioError: "The bird was added, but the song couldn't upload.",
+      },
       { status: 200 },
     );
   }

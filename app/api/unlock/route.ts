@@ -19,7 +19,10 @@ function callerIp(request: Request): string {
 
   const chain = request.headers.get("x-forwarded-for");
   if (chain) {
-    const hops = chain.split(",").map((h) => h.trim()).filter(Boolean);
+    const hops = chain
+      .split(",")
+      .map((h) => h.trim())
+      .filter(Boolean);
     if (hops.length > 0) return hops[hops.length - 1];
   }
 
@@ -33,9 +36,12 @@ export async function POST(request: Request) {
   // Shared store, not an in-memory Map: serverless runs many instances and each
   // would otherwise hold its own counter, so spreading guesses across enough
   // concurrent requests would reset the limit every time.
-  const { data: blocked, error: blockError } = await supabase.rpc("unlock_is_blocked", {
-    p_ip: ip,
-  });
+  const { data: blocked, error: blockError } = await supabase.rpc(
+    "unlock_is_blocked",
+    {
+      p_ip: ip,
+    },
+  );
 
   if (blockError) {
     // Fail closed. If we can't tell whether this is an attack, refusing is the
@@ -58,7 +64,10 @@ export async function POST(request: Request) {
   try {
     passcode = String((await request.json()).passcode ?? "");
   } catch {
-    return NextResponse.json({ error: "Expected a JSON body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Expected a JSON body." },
+      { status: 400 },
+    );
   }
 
   const correct = isCorrectPasscode(passcode);
@@ -66,7 +75,10 @@ export async function POST(request: Request) {
   await supabase.from("unlock_attempts").insert({ ip, ok: correct });
 
   if (!correct) {
-    return NextResponse.json({ error: "That's not the right code." }, { status: 401 });
+    return NextResponse.json(
+      { error: "That's not the right code." },
+      { status: 401 },
+    );
   }
 
   const token = await issueToken();

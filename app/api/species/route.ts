@@ -15,12 +15,16 @@ const ALL = species as Species[];
 const LIMIT = 25;
 
 export async function GET(request: Request) {
-  const query = (new URL(request.url).searchParams.get("q") ?? "").trim().toLowerCase();
+  const query = (new URL(request.url).searchParams.get("q") ?? "")
+    .trim()
+    .toLowerCase();
 
   // No query: the illustrated species, which is the useful default — those are
   // the ones that look like something in the collage.
   if (query.length < 2) {
-    return NextResponse.json({ species: ALL.filter((s) => s.art).slice(0, LIMIT) });
+    return NextResponse.json({
+      species: ALL.filter((s) => s.art).slice(0, LIMIT),
+    });
   }
 
   const scored: Array<{ species: Species; score: number }> = [];
@@ -41,10 +45,17 @@ export async function GET(request: Request) {
     // Having a picture is worth about half a tier — enough to break ties in
     // favour of a bird that will actually show up in the collage, not enough
     // to bury an exact name match that happens to lack art.
-    scored.push({ species: candidate, score: score * 2 + (candidate.art ? 0 : 1) });
+    scored.push({
+      species: candidate,
+      score: score * 2 + (candidate.art ? 0 : 1),
+    });
   }
 
-  scored.sort((a, b) => a.score - b.score || a.species.com.localeCompare(b.species.com));
+  scored.sort(
+    (a, b) => a.score - b.score || a.species.com.localeCompare(b.species.com),
+  );
 
-  return NextResponse.json({ species: scored.slice(0, LIMIT).map((s) => s.species) });
+  return NextResponse.json({
+    species: scored.slice(0, LIMIT).map((s) => s.species),
+  });
 }

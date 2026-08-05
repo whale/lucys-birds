@@ -18,11 +18,17 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Expected a JSON body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Expected a JSON body." },
+      { status: 400 },
+    );
   }
 
   if (!body.birdId || !body.storagePath) {
-    return NextResponse.json({ error: "Missing birdId or storagePath." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing birdId or storagePath." },
+      { status: 400 },
+    );
   }
 
   const supabase = serviceClient();

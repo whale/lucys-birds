@@ -65,13 +65,22 @@ export function BirdMap({
       });
 
       located.forEach((bird) => {
+        // Built as a real element rather than an HTML string. Species names
+        // come from the database, and interpolating them into markup would put
+        // stored input into the DOM of a public page — a quote or an angle
+        // bracket in a name is all it would take. Setting properties can't
+        // inject anything.
+        const art = document.createElement("span");
+        art.className = "bird-pin-art";
+        art.style.backgroundImage = `url("${encodeURI(perchedSrc(bird.sciName))}")`;
+        art.setAttribute("role", "img");
+        art.setAttribute("aria-label", bird.comName);
+
         const icon = L.divIcon({
           className: "bird-pin",
           // A CSS background, not an <img> — same reason as everywhere else on
           // this site, so browser extensions have nothing to attach to.
-          html: `<span class="bird-pin-art" style="background-image:url(${perchedSrc(
-            bird.sciName,
-          )})" role="img" aria-label="${bird.comName}"></span>`,
+          html: art,
           iconSize: [46, 46],
           iconAnchor: [23, 23],
         });
