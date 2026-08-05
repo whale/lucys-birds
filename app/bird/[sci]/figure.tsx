@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { flightSrc, perchedSrc } from "@/lib/species-paths";
+import { NOPIN } from "@/lib/nopin";
 
 /**
  * The illustration, with the perched / in-flight toggle the original had.
@@ -43,16 +44,25 @@ export function BirdFigure({
     <div className="detail-figure">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        {...NOPIN}
         src={flying ? flightSrc(sciName) : perchedSrc(sciName)}
         alt={`${comName}, ${flying ? "in flight" : "perched"}`}
       />
 
       {flight && (
         <div className="pose-toggle" role="group" aria-label="Pose">
-          <button type="button" aria-pressed={!flying} onClick={() => setFlying(false)}>
+          <button
+            type="button"
+            aria-pressed={!flying}
+            onClick={() => setFlying(false)}
+          >
             perched
           </button>
-          <button type="button" aria-pressed={flying} onClick={() => setFlying(true)}>
+          <button
+            type="button"
+            aria-pressed={flying}
+            onClick={() => setFlying(true)}
+          >
             in flight
           </button>
         </div>

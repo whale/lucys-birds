@@ -51,7 +51,10 @@ function UnlockForm() {
     <div className="gate-inner">
       <div>
         <span className="eyebrow">Lucy&rsquo;s birds</span>
-        <h1 className="display" style={{ fontSize: "clamp(20px, 2.2vw, 28px)" }}>
+        <h1
+          className="display"
+          style={{ fontSize: "clamp(20px, 2.2vw, 28px)" }}
+        >
           ENTER THE CODE
         </h1>
       </div>
@@ -73,7 +76,9 @@ function UnlockForm() {
       />
 
       <p className="hint">
-        {checking ? "Checking…" : "Six digits. You only need this once on each device."}
+        {checking
+          ? "Checking…"
+          : "Six digits. You only need this once on each device."}
       </p>
 
       {error && <p className="notice notice-error">{error}</p>}

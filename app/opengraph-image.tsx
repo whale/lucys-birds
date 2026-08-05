@@ -15,10 +15,13 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const ILLUSTRATED = new Set(
-  (speciesData as Array<{ sci: string; art: boolean }>).filter((s) => s.art).map((s) => s.sci),
+  (speciesData as Array<{ sci: string; art: boolean }>)
+    .filter((s) => s.art)
+    .map((s) => s.sci),
 );
 
-const slug = (sciName: string) => sciName.toLowerCase().trim().replace(/\s+/g, "-");
+const slug = (sciName: string) =>
+  sciName.toLowerCase().trim().replace(/\s+/g, "-");
 
 /**
  * Illustrations have to be inlined as data URIs — the image renderer can't
@@ -30,7 +33,9 @@ const slug = (sciName: string) => sciName.toLowerCase().trim().replace(/\s+/g, "
  */
 async function inline(origin: string, sciName: string): Promise<string | null> {
   try {
-    const response = await fetch(`${origin}/illustrations/${slug(sciName)}.png`);
+    const response = await fetch(
+      `${origin}/illustrations/${slug(sciName)}.png`,
+    );
     if (!response.ok) return null;
     const buffer = Buffer.from(await response.arrayBuffer());
     return `data:image/png;base64,${buffer.toString("base64")}`;
@@ -39,7 +44,8 @@ async function inline(origin: string, sciName: string): Promise<string | null> {
   }
 }
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lucys-birds.vercel.app";
+const SITE =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://lucys-birds.vercel.app";
 
 export default async function Image() {
   let birds: Array<{ sci_name: string }> = [];
@@ -47,7 +53,9 @@ export default async function Image() {
   let withSongs = 0;
 
   try {
-    const { data } = await serviceClient().from("collection").select("sci_name, audio_path");
+    const { data } = await serviceClient()
+      .from("collection")
+      .select("sci_name, audio_path");
     const rows = data ?? [];
     total = rows.length;
     withSongs = rows.filter((r) => r.audio_path).length;
@@ -57,44 +65,58 @@ export default async function Image() {
     console.error("opengraph-image query failed", cause);
   }
 
-  const portraits = (await Promise.all(birds.map((b) => inline(SITE, b.sci_name)))).filter(
-    (src): src is string => Boolean(src),
-  );
+  const portraits = (
+    await Promise.all(birds.map((b) => inline(SITE, b.sci_name)))
+  ).filter((src): src is string => Boolean(src));
 
   return new ImageResponse(
-    (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          background: "#f4efe4",
-          padding: "72px 80px",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 88, color: "#2a2622", letterSpacing: "-0.02em" }}>
-            Lucy&rsquo;s Birds
-          </div>
-          <div style={{ fontSize: 34, color: "#6b6357", marginTop: 16 }}>
-            {total > 0
-              ? `${total} ${total === 1 ? "bird" : "birds"} collected${
-                  withSongs > 0 ? ` · ${withSongs} you can listen to` : ""
-                }`
-              : "A collection of birds, and their songs"}
-          </div>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        background: "#f4efe4",
+        padding: "72px 80px",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div
+          style={{ fontSize: 88, color: "#2a2622", letterSpacing: "-0.02em" }}
+        >
+          Lucy&rsquo;s Birds
         </div>
-
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 28, height: 300 }}>
-          {portraits.map((src, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={src} width={200} height={300} style={{ objectFit: "contain" }} alt="" />
-          ))}
+        <div style={{ fontSize: 34, color: "#6b6357", marginTop: 16 }}>
+          {total > 0
+            ? `${total} ${total === 1 ? "bird" : "birds"} collected${
+                withSongs > 0 ? ` · ${withSongs} you can listen to` : ""
+              }`
+            : "A collection of birds, and their songs"}
         </div>
       </div>
-    ),
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-end",
+          gap: 28,
+          height: 300,
+        }}
+      >
+        {portraits.map((src, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={src}
+            width={200}
+            height={300}
+            style={{ objectFit: "contain" }}
+            alt=""
+          />
+        ))}
+      </div>
+    </div>,
     size,
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { perchedSrc } from "@/lib/species-paths";
+import { NOPIN } from "@/lib/nopin";
 
 type Species = { sci: string; com: string; art: boolean };
 
@@ -23,9 +24,12 @@ export default function AddPage() {
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/species?q=${encodeURIComponent(query)}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `/api/species?q=${encodeURIComponent(query)}`,
+          {
+            signal: controller.signal,
+          },
+        );
         if (!response.ok) throw new Error("Couldn't load the bird list.");
         setResults((await response.json()).species ?? []);
       } catch (cause) {
@@ -67,7 +71,11 @@ export default function AddPage() {
       const started = await fetch("/api/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sciName: chosen.sci, comName: chosen.com, withAudio: Boolean(song) }),
+        body: JSON.stringify({
+          sciName: chosen.sci,
+          comName: chosen.com,
+          withAudio: Boolean(song),
+        }),
       });
       const result = await started.json();
       if (!started.ok) throw new Error(result.error ?? "That didn't save.");
@@ -80,7 +88,9 @@ export default function AddPage() {
         });
         if (!put.ok) {
           console.error("song upload failed", put.status);
-          throw new Error(`${chosen.com} was added, but the song didn't upload. Try the song again.`);
+          throw new Error(
+            `${chosen.com} was added, but the song didn't upload. Try the song again.`,
+          );
         }
 
         const attached = await fetch("/api/add/song", {
@@ -93,7 +103,10 @@ export default function AddPage() {
             durationSeconds: await durationOf(song),
           }),
         });
-        if (!attached.ok) throw new Error((await attached.json()).error ?? "The song didn't attach.");
+        if (!attached.ok)
+          throw new Error(
+            (await attached.json()).error ?? "The song didn't attach.",
+          );
       } else if (result.audioError) {
         throw new Error(result.audioError);
       }
@@ -115,7 +128,10 @@ export default function AddPage() {
       <header className="masthead">
         <div>
           <span className="eyebrow">Lucy&rsquo;s birds</span>
-          <h1 className="display" style={{ fontSize: "clamp(22px, 2.4vw, 32px)" }}>
+          <h1
+            className="display"
+            style={{ fontSize: "clamp(22px, 2.4vw, 32px)" }}
+          >
             ADD A BIRD
           </h1>
         </div>
@@ -129,7 +145,8 @@ export default function AddPage() {
       <div className="stack">
         {saved && (
           <p className="notice">
-            Added <strong>{saved}</strong>. <Link href="/">See the collection</Link>
+            Added <strong>{saved}</strong>.{" "}
+            <Link href="/">See the collection</Link>
           </p>
         )}
 
@@ -162,7 +179,12 @@ export default function AddPage() {
                     <span className="picker-thumb">
                       {s.art ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={perchedSrc(s.sci)} alt="" loading="lazy" />
+                        <img
+                          {...NOPIN}
+                          src={perchedSrc(s.sci)}
+                          alt=""
+                          loading="lazy"
+                        />
                       ) : (
                         <span className="picker-thumb-empty" aria-hidden="true">
                           🪶
@@ -177,7 +199,9 @@ export default function AddPage() {
                 </li>
               ))}
               {results.length === 0 && query.length >= 2 && (
-                <li className="hint">No bird by that name. Try part of it, like &ldquo;wren&rdquo;.</li>
+                <li className="hint">
+                  No bird by that name. Try part of it, like &ldquo;wren&rdquo;.
+                </li>
               )}
             </ul>
           </>
@@ -187,7 +211,7 @@ export default function AddPage() {
               <span className="picker-thumb">
                 {chosen.art ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={perchedSrc(chosen.sci)} alt="" />
+                  <img {...NOPIN} src={perchedSrc(chosen.sci)} alt="" />
                 ) : (
                   <span className="picker-thumb-empty" aria-hidden="true">
                     🪶
@@ -198,7 +222,11 @@ export default function AddPage() {
                 <span className="picker-name">{chosen.com}</span>
                 <span className="picker-sci">{chosen.sci}</span>
               </span>
-              <button type="button" className="chip" onClick={() => setChosen(null)}>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => setChosen(null)}
+              >
                 change
               </button>
             </div>
@@ -219,8 +247,16 @@ export default function AddPage() {
             </label>
 
             <div className="actions">
-              <button className="chip chip-solid" onClick={save} disabled={saving}>
-                {saving ? (song ? "uploading the song…" : "adding…") : "add to my collection"}
+              <button
+                className="chip chip-solid"
+                onClick={save}
+                disabled={saving}
+              >
+                {saving
+                  ? song
+                    ? "uploading the song…"
+                    : "adding…"
+                  : "add to my collection"}
               </button>
             </div>
           </>

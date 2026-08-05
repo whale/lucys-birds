@@ -17,14 +17,17 @@ type Bird = {
 
 /** The URL carries the slug, so find the bird by matching it back. */
 async function findBird(sciSlug: string): Promise<Bird | null> {
-  const { data, error } = await serviceClient().from("birds").select("id, sci_name, com_name, added_at");
+  const { data, error } = await serviceClient()
+    .from("birds")
+    .select("id, sci_name, com_name, added_at");
   if (error) {
     console.error("bird lookup failed", error);
     return null;
   }
   return (
     (data ?? []).find(
-      (b) => b.sci_name.toLowerCase().replace(/\s+/g, "-") === sciSlug.toLowerCase(),
+      (b) =>
+        b.sci_name.toLowerCase().replace(/\s+/g, "-") === sciSlug.toLowerCase(),
     ) ?? null
   );
 }
@@ -44,19 +47,26 @@ async function lookup(title: string): Promise<string | null> {
         // Wikipedia's API policy requires a descriptive User-Agent. Without one
         // it throttles, which from a shared serverless IP means it mostly just
         // stops answering.
-        headers: { "User-Agent": "LucysBirds/1.0 (https://lucys-birds.vercel.app)" },
+        headers: {
+          "User-Agent": "LucysBirds/1.0 (https://lucys-birds.vercel.app)",
+        },
         next: { revalidate: 86400 },
       },
     );
     if (!response.ok) return null;
     const data = await response.json();
-    return typeof data.extract === "string" && data.extract.length > 0 ? data.extract : null;
+    return typeof data.extract === "string" && data.extract.length > 0
+      ? data.extract
+      : null;
   } catch {
     return null; // a missing description is not worth failing the page over
   }
 }
 
-async function summary(sciName: string, comName: string): Promise<string | null> {
+async function summary(
+  sciName: string,
+  comName: string,
+): Promise<string | null> {
   // Scientific name first — it redirects to the right article and is never
   // ambiguous. The common name is the fallback for species Wikipedia files
   // under a vernacular title only.
@@ -76,7 +86,11 @@ export async function generateMetadata({
   };
 }
 
-export default async function BirdPage({ params }: { params: Promise<{ sci: string }> }) {
+export default async function BirdPage({
+  params,
+}: {
+  params: Promise<{ sci: string }>;
+}) {
   const bird = await findBird((await params).sci);
   if (!bird) notFound();
 
@@ -101,7 +115,10 @@ export default async function BirdPage({ params }: { params: Promise<{ sci: stri
       <header className="masthead">
         <div>
           <span className="eyebrow">Lucy&rsquo;s birds</span>
-          <h1 className="display" style={{ fontSize: "clamp(22px, 2.4vw, 32px)" }}>
+          <h1
+            className="display"
+            style={{ fontSize: "clamp(22px, 2.4vw, 32px)" }}
+          >
             {bird.com_name.toUpperCase()}
           </h1>
         </div>
@@ -127,7 +144,9 @@ export default async function BirdPage({ params }: { params: Promise<{ sci: stri
           <div className="stat-row">
             <div className="stat">
               <span className="n">{recordings?.length ?? 0}</span>
-              <span className="lbl">{recordings?.length === 1 ? "recording" : "recordings"}</span>
+              <span className="lbl">
+                {recordings?.length === 1 ? "recording" : "recordings"}
+              </span>
             </div>
             <div className="stat">
               <span className="n">{added}</span>
@@ -149,17 +168,31 @@ export default async function BirdPage({ params }: { params: Promise<{ sci: stri
           )}
 
           <div className="actions" style={{ marginTop: "22px" }}>
-            <a className="chip ext" href={wikipediaUrl(bird.sci_name)} target="_blank" rel="noopener">
+            <a
+              className="chip ext"
+              href={wikipediaUrl(bird.sci_name)}
+              target="_blank"
+              rel="noopener"
+            >
               wikipedia
             </a>
-            <a className="chip ext" href={ebirdUrl(bird.com_name)} target="_blank" rel="noopener">
+            <a
+              className="chip ext"
+              href={ebirdUrl(bird.com_name)}
+              target="_blank"
+              rel="noopener"
+            >
               ebird
             </a>
           </div>
         </div>
       </div>
 
-      <Recordings recordings={recordings ?? []} audioBase={audioBase} comName={bird.com_name} />
+      <Recordings
+        recordings={recordings ?? []}
+        audioBase={audioBase}
+        comName={bird.com_name}
+      />
     </main>
   );
 }

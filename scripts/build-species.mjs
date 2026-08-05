@@ -25,13 +25,25 @@ const flight = new Set(files.filter((n) => n.endsWith("-2.png")).map((n) => n.re
 
 const slug = (sci) => sci.toLowerCase().trim().replace(/\s+/g, "-");
 
+// Natural pixel dimensions of each illustration, from the original project's
+// dims.json. The collage view needs the real aspect ratio to place birds
+// without squashing them — a heron and a wren are not the same shape.
+const dims = JSON.parse(await readFile("avian/frontend/dims.json", "utf8"));
+
 const species = Object.entries(labels)
-  .map(([sci, com]) => ({
-    sci,
-    com,
-    art: perched.has(slug(sci)),
-    flight: flight.has(slug(sci)),
-  }))
+  .map(([sci, com]) => {
+    const key = slug(sci);
+    const [w, h] = dims[key] ?? [];
+    return {
+      sci,
+      com,
+      art: perched.has(key),
+      flight: flight.has(key),
+      // Aspect ratio only, rounded — the absolute pixel size isn't useful and
+      // shipping two more numbers per species for 7,058 species adds up.
+      ...(w && h ? { ar: Math.round((w / h) * 100) / 100 } : {}),
+    };
+  })
   .sort((a, b) => {
     // Illustrated first, then alphabetical by the name Lucy will actually read.
     if (a.art !== b.art) return a.art ? -1 : 1;

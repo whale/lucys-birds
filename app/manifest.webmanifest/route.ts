@@ -11,8 +11,8 @@ export function GET() {
     description: "A collection of birds Lucy has found, with their songs.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f4efe4",
-    theme_color: "#f4efe4",
+    background_color: "#fcfcfb",
+    theme_color: "#fcfcfb",
     icons: [
       { src: "/icon.png", sizes: "180x180", type: "image/png" },
       { src: "/apple-icon.png", sizes: "180x180", type: "image/png", purpose: "any" },

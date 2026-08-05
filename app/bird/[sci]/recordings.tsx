@@ -78,7 +78,8 @@ export function Recordings({
                     month: "short",
                     year: "numeric",
                   })}
-                  {clock(recording.duration_seconds) && ` · ${clock(recording.duration_seconds)}`}
+                  {clock(recording.duration_seconds) &&
+                    ` · ${clock(recording.duration_seconds)}`}
                 </span>
               </li>
             );

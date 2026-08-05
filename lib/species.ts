@@ -1,6 +1,13 @@
 import speciesData from "@/data/species.json";
 
-export type Species = { sci: string; com: string; art: boolean; flight: boolean };
+export type Species = {
+  sci: string;
+  com: string;
+  art: boolean;
+  flight: boolean;
+  /** Width / height of the illustration. Only present where artwork exists. */
+  ar?: number;
+};
 
 /**
  * Server-side species lookups. This module imports the full 480 KB species
@@ -24,6 +31,17 @@ export function hasArt(sciName: string): boolean {
 /** Whether the second, in-flight illustration exists for this species. */
 export function hasFlight(sciName: string): boolean {
   return FLIGHT.has(sciName);
+}
+
+const ASPECT = new Map(ALL.filter((s) => s.ar).map((s) => [s.sci, s.ar as number]));
+
+/**
+ * Width / height of the illustration. The collage needs real proportions —
+ * a heron and a wren are not the same shape, and forcing them into one box
+ * squashes both.
+ */
+export function aspectRatio(sciName: string): number | undefined {
+  return ASPECT.get(sciName);
 }
 
 export { slug, perchedSrc, flightSrc, wikipediaUrl, ebirdUrl } from "./species-paths";
