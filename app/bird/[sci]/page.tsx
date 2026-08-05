@@ -34,13 +34,19 @@ async function findBird(sciSlug: string): Promise<Bird | null> {
  * a day — species descriptions don't change, and it shouldn't cost a round trip
  * on every visit.
  */
-async function summary(sciName: string): Promise<string | null> {
+async function lookup(title: string): Promise<string | null> {
   try {
     const response = await fetch(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
-        sciName.replace(/\s+/g, "_"),
+        title.replace(/\s+/g, "_"),
       )}`,
-      { next: { revalidate: 86400 } },
+      {
+        // Wikipedia's API policy requires a descriptive User-Agent. Without one
+        // it throttles, which from a shared serverless IP means it mostly just
+        // stops answering.
+        headers: { "User-Agent": "LucysBirds/1.0 (https://lucys-birds.vercel.app)" },
+        next: { revalidate: 86400 },
+      },
     );
     if (!response.ok) return null;
     const data = await response.json();
@@ -48,6 +54,13 @@ async function summary(sciName: string): Promise<string | null> {
   } catch {
     return null; // a missing description is not worth failing the page over
   }
+}
+
+async function summary(sciName: string, comName: string): Promise<string | null> {
+  // Scientific name first — it redirects to the right article and is never
+  // ambiguous. The common name is the fallback for species Wikipedia files
+  // under a vernacular title only.
+  return (await lookup(sciName)) ?? (await lookup(comName));
 }
 
 export async function generateMetadata({
@@ -74,7 +87,7 @@ export default async function BirdPage({ params }: { params: Promise<{ sci: stri
     .order("is_primary", { ascending: false })
     .order("created_at", { ascending: false });
 
-  const description = await summary(bird.sci_name);
+  const description = await summary(bird.sci_name, bird.com_name);
   const audioBase = `${process.env.SUPABASE_URL}/storage/v1/object/public/${RECORDINGS_BUCKET}`;
 
   const added = new Date(bird.added_at).toLocaleDateString("en-US", {
