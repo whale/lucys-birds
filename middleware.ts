@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { GATE_COOKIE, isValidToken } from "@/lib/gate";
+import { GATE_COOKIE, isValidToken, issueToken } from "@/lib/gate";
 
 // Public: the collage and the read API. Showing off the birds is the point.
 // Gated: everything that writes, plus the pages that do the writing.
@@ -11,12 +11,10 @@ import { GATE_COOKIE, isValidToken } from "@/lib/gate";
 export const config = {
   matcher: [
     "/add/:path*",
-    "/spot/:path*",
-    "/api/upload-url",
-    "/api/spot",
-    "/api/analyze",
+    "/api/add",
+    "/api/add/:path*",
     // Not sensitive — a static species list — but it exists only to serve the
-    // gated /spot page, and leaving it out contradicts the rule above.
+    // gated /add page, and leaving it out contradicts the rule above.
     "/api/species",
   ],
 };
@@ -24,6 +22,27 @@ export const config = {
 export async function middleware(request: NextRequest) {
   if (await isValidToken(request.cookies.get(GATE_COOKIE)?.value)) {
     return NextResponse.next();
+  }
+
+  // Lucy's own link carries the passcode, so she never types anything: she
+  // bookmarks /add?key=... once and it unlocks on arrival. Anyone else who
+  // lands on /add cold still gets the gate.
+  const key = request.nextUrl.searchParams.get("key");
+  if (key && process.env.GATE_PASSCODE && key === process.env.GATE_PASSCODE) {
+    const clean = request.nextUrl.clone();
+    // Redirect rather than continue, so the passcode doesn't sit in the address
+    // bar to be screenshotted, shoulder-surfed or shared by accident.
+    clean.searchParams.delete("key");
+    const response = NextResponse.redirect(clean);
+    const token = await issueToken();
+    response.cookies.set(GATE_COOKIE, token.value, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: token.maxAge,
+    });
+    return response;
   }
 
   // APIs get a status code; people get the unlock page with somewhere to
