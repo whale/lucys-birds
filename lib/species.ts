@@ -46,6 +46,13 @@ export function findSpecies(sciName: string): Species | null {
   return BY_SCI.get(sciName.trim()) ?? null;
 }
 
+const BY_COM = new Map(ALL.map((s) => [s.com.toLowerCase(), s]));
+
+/** Resolve a common name to a known species, or null. Case-insensitive. */
+export function findByCommonName(comName: string): Species | null {
+  return BY_COM.get(comName.trim().toLowerCase()) ?? null;
+}
+
 const ASPECT = new Map(
   ALL.filter((s) => s.ar).map((s) => [s.sci, s.ar as number]),
 );

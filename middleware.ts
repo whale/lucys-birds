@@ -13,6 +13,7 @@ export const config = {
     "/add/:path*",
     "/api/add",
     "/api/add/:path*",
+    "/api/share",
     // Not sensitive — a static species list — but it exists only to serve the
     // gated /add page, and leaving it out contradicts the rule above.
     "/api/species",
