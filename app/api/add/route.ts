@@ -15,6 +15,9 @@ type Body = {
   sciName?: string;
   comName?: string;
   withAudio?: boolean;
+  lat?: number;
+  lon?: number;
+  place?: string;
 };
 
 export async function POST(request: Request) {
@@ -35,7 +38,19 @@ export async function POST(request: Request) {
   // be coming back to attach a song — so return the existing row either way.
   const { data: bird, error } = await supabase
     .from("birds")
-    .upsert({ sci_name: body.sciName, com_name: body.comName }, { onConflict: "sci_name" })
+    .upsert(
+      {
+        sci_name: body.sciName,
+        com_name: body.comName,
+        // Only overwrite a location when one was actually supplied, so
+        // re-adding a bird to attach a song doesn't wipe where she found it.
+        ...(Number.isFinite(body.lat) && Number.isFinite(body.lon)
+          ? { lat: body.lat, lon: body.lon }
+          : {}),
+        ...(body.place?.trim() ? { place: body.place.trim() } : {}),
+      },
+      { onConflict: "sci_name" },
+    )
     .select("id, com_name")
     .single();
 

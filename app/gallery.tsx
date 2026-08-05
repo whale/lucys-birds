@@ -3,14 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { perchedSrc, slug } from "@/lib/species-paths";
 import { Collage } from "./collage";
+import { BirdMap } from "./map";
 import { Tray } from "./tray";
-import { NOPIN } from "@/lib/nopin";
+import { BirdArt } from "./bird-art";
 
 export type GalleryBird = {
   id: number;
   sciName: string;
   comName: string;
   hasSong: boolean;
+  lat: number | null;
+  lon: number | null;
+  place: string | null;
   art: boolean;
   flight: boolean;
   ar?: number;
@@ -127,12 +131,14 @@ export function Gallery({ birds }: { birds: GalleryBird[] }) {
               >
                 <span className="portrait">
                   {bird.art ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      {...NOPIN}
+                    <BirdArt
                       src={perchedSrc(bird.sciName)}
-                      alt={bird.comName}
-                      loading="lazy"
+                      label={bird.comName}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                      }}
                     />
                   ) : (
                     <span className="portrait-empty" aria-hidden="true">
@@ -151,17 +157,7 @@ export function Gallery({ birds }: { birds: GalleryBird[] }) {
 
       {view === "collage" && <Collage birds={birds} onOpen={open} />}
 
-      {view === "map" && (
-        <div className="view-empty">
-          <p className="display" style={{ fontSize: "clamp(18px, 2vw, 24px)" }}>
-            NOTHING TO MAP YET
-          </p>
-          <p>
-            No bird has a place attached. Once new birds are added with a
-            location, they&rsquo;ll show up here.
-          </p>
-        </div>
-      )}
+      {view === "map" && <BirdMap birds={birds} onOpen={open} />}
 
       <Tray birds={birds} index={openIndex} onClose={close} onStep={step} />
     </>

@@ -1,3 +1,6 @@
+@import "leaflet/dist/leaflet.css";
+@import "leaflet.markercluster/dist/MarkerCluster.css";
+
 /* Design tokens lifted from the original AvianVisitors stylesheet
    (avian/frontend/styles.css) so this reads as the same object.
    Near-white paper, not cream: the illustrations are transparent cutouts and
@@ -257,6 +260,69 @@ button.chip {
   }
   .collage-bird:hover,
   .collage-bird:focus-visible {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------- map */
+
+.birdmap {
+  height: clamp(420px, 62vh, 760px);
+  margin-top: clamp(24px, 3vw, 36px);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--recess);
+  /* Leaflet renders its own stacking contexts; keep it under the tray. */
+  z-index: 0;
+}
+
+/* Pins are the illustrations. A map is no reason to stop using the artwork. */
+.bird-pin {
+  background: none;
+  border: 0;
+}
+
+.bird-pin-art {
+  display: block;
+  width: 46px;
+  height: 46px;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: contain;
+  filter: drop-shadow(0 2px 3px rgba(26, 22, 18, 0.35));
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+
+.bird-pin-art:hover {
+  transform: scale(1.12);
+}
+
+/* Nearby birds collapse into one marker with a count until you zoom in. */
+.bird-cluster {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 12px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 8px rgba(26, 22, 18, 0.4);
+}
+
+.leaflet-container {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: var(--paper-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bird-pin-art {
+    transition: none;
+  }
+  .bird-pin-art:hover {
     transform: none;
   }
 }
@@ -690,6 +756,7 @@ label {
 }
 
 input[type="search"],
+input[type="text"],
 input[type="file"],
 textarea {
   font: 400 16px/1.4 var(--serif); /* below 16px, iOS zooms the page on focus */
@@ -705,6 +772,7 @@ textarea {
 }
 
 input[type="search"]:focus-visible,
+input[type="text"]:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 1px;

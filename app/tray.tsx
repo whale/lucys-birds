@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { flightSrc, perchedSrc, slug } from "@/lib/species-paths";
 import type { GalleryBird } from "./gallery";
-import { NOPIN } from "@/lib/nopin";
+import { BirdArt } from "./bird-art";
 
 type Detail = {
   comName: string;
@@ -179,15 +179,14 @@ export function Tray({
             <div className="tray-body">
               <div className="tray-figure">
                 {bird.art ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    {...NOPIN}
+                  <BirdArt
                     src={
                       showFlight
                         ? flightSrc(bird.sciName)
                         : perchedSrc(bird.sciName)
                     }
-                    alt={`${bird.comName}, ${showFlight ? "in flight" : "perched"}`}
+                    label={`${bird.comName}, ${showFlight ? "in flight" : "perched"}`}
+                    style={{ width: "100%", height: "100%", display: "block" }}
                   />
                 ) : (
                   <span

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { flightSrc, perchedSrc } from "@/lib/species-paths";
-import { NOPIN } from "@/lib/nopin";
+import { BirdArt } from "../../bird-art";
 
 /**
  * The illustration, with the perched / in-flight toggle the original had.
@@ -42,11 +42,10 @@ export function BirdFigure({
 
   return (
     <div className="detail-figure">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        {...NOPIN}
+      <BirdArt
         src={flying ? flightSrc(sciName) : perchedSrc(sciName)}
-        alt={`${comName}, ${flying ? "in flight" : "perched"}`}
+        label={`${comName}, ${flying ? "in flight" : "perched"}`}
+        style={{ width: "100%", height: "100%", display: "block" }}
       />
 
       {flight && (

@@ -12,7 +12,7 @@ export default async function CollectionPage() {
   try {
     const { data, error } = await serviceClient()
       .from("collection")
-      .select("id, sci_name, com_name, audio_path");
+      .select("id, sci_name, com_name, audio_path, lat, lon, place");
     if (error) throw error;
 
     // Artwork facts are resolved here so the 588 KB species list never reaches
@@ -22,6 +22,9 @@ export default async function CollectionPage() {
       sciName: bird.sci_name,
       comName: bird.com_name,
       hasSong: Boolean(bird.audio_path),
+      lat: bird.lat ?? null,
+      lon: bird.lon ?? null,
+      place: bird.place ?? null,
       art: hasArt(bird.sci_name),
       flight: hasFlight(bird.sci_name),
       ar: aspectRatio(bird.sci_name),

@@ -33,7 +33,9 @@ export function hasFlight(sciName: string): boolean {
   return FLIGHT.has(sciName);
 }
 
-const ASPECT = new Map(ALL.filter((s) => s.ar).map((s) => [s.sci, s.ar as number]));
+const ASPECT = new Map(
+  ALL.filter((s) => s.ar).map((s) => [s.sci, s.ar as number]),
+);
 
 /**
  * Width / height of the illustration. The collage needs real proportions —
@@ -44,4 +46,10 @@ export function aspectRatio(sciName: string): number | undefined {
   return ASPECT.get(sciName);
 }
 
-export { slug, perchedSrc, flightSrc, wikipediaUrl, ebirdUrl } from "./species-paths";
+export {
+  slug,
+  perchedSrc,
+  flightSrc,
+  wikipediaUrl,
+  ebirdUrl,
+} from "./species-paths";

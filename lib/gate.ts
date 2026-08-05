@@ -14,7 +14,9 @@ const TTL_MS = 1000 * 60 * 60 * 24 * 90; // 90 days — she shouldn't retype thi
 function secretKey(): Promise<CryptoKey> {
   const secret = process.env.GATE_SECRET;
   if (!secret) {
-    throw new Error("Missing GATE_SECRET. Without it the gate can't sign anything.");
+    throw new Error(
+      "Missing GATE_SECRET. Without it the gate can't sign anything.",
+    );
   }
   return crypto.subtle.importKey(
     "raw",
@@ -26,7 +28,11 @@ function secretKey(): Promise<CryptoKey> {
 }
 
 async function sign(payload: string): Promise<string> {
-  const signature = await crypto.subtle.sign("HMAC", await secretKey(), new TextEncoder().encode(payload));
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    await secretKey(),
+    new TextEncoder().encode(payload),
+  );
   return Array.from(new Uint8Array(signature))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -42,10 +48,15 @@ function safeEqual(a: string, b: string): boolean {
 
 export async function issueToken(): Promise<{ value: string; maxAge: number }> {
   const expiry = String(Date.now() + TTL_MS);
-  return { value: `${expiry}.${await sign(expiry)}`, maxAge: Math.floor(TTL_MS / 1000) };
+  return {
+    value: `${expiry}.${await sign(expiry)}`,
+    maxAge: Math.floor(TTL_MS / 1000),
+  };
 }
 
-export async function isValidToken(token: string | undefined): Promise<boolean> {
+export async function isValidToken(
+  token: string | undefined,
+): Promise<boolean> {
   if (!token) return false;
   const [expiry, signature] = token.split(".");
   if (!expiry || !signature) return false;
@@ -57,7 +68,9 @@ export async function isValidToken(token: string | undefined): Promise<boolean> 
 export function isCorrectPasscode(submitted: string): boolean {
   const expected = process.env.GATE_PASSCODE;
   if (!expected) {
-    throw new Error("Missing GATE_PASSCODE. Set it before anyone can unlock the app.");
+    throw new Error(
+      "Missing GATE_PASSCODE. Set it before anyone can unlock the app.",
+    );
   }
   return safeEqual(submitted.trim(), expected);
 }

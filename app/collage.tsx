@@ -1,86 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { perchedSrc } from "@/lib/species-paths";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { flightSrc, perchedSrc, slug } from "@/lib/species-paths";
+import {
+  packCollage,
+  type MaskTable,
+  type PackedTile,
+} from "@/lib/collage-pack";
+import { BirdArt } from "./bird-art";
 import type { GalleryBird } from "./gallery";
-import { NOPIN } from "@/lib/nopin";
 
-/**
- * The overlapping, size-varied arrangement the original project is built
- * around. A grid is a list; this is a flock.
- *
- * Positions are computed rather than authored: measure the container, lay birds
- * out left to right at varying scale, and let rows overlap vertically so the
- * silhouettes interlock instead of sitting in lanes.
- */
+/** 15% of birds show their flight pose, as in the original. Rare enough to be a find. */
+const FLY_PROB = 0.15;
 
-/** Stable pseudo-random in [0,1) from a string — same bird, same size, every render. */
-function hashUnit(text: string, salt: number): number {
-  let hash = 2166136261 ^ salt;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return ((hash >>> 0) % 10000) / 10000;
-}
-
-type Placed = GalleryBird & {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  z: number;
-};
-
-function layout(
-  birds: GalleryBird[],
-  width: number,
-): { placed: Placed[]; height: number } {
-  if (width <= 0) return { placed: [], height: 0 };
-
-  // Row height scales with the viewport so the flock reads the same on a phone
-  // as on a desktop, just with fewer birds per row.
-  const base = Math.max(90, Math.min(210, width / 7));
-  const placed: Placed[] = [];
-
-  let x = 0;
-  let rowTop = 0;
-  let rowMax = 0;
-
-  birds.forEach((bird, i) => {
-    // Scale varies per species but never wildly — a collage, not a joke.
-    const scale = 0.68 + hashUnit(bird.sciName, 1) * 0.62;
-    const h = base * scale;
-    const w = h * (bird.ar ?? 0.9);
-
-    if (x > 0 && x + w > width) {
-      // New row, pulled up so the rows interlock rather than stack.
-      rowTop += rowMax * 0.74;
-      x = 0;
-      rowMax = 0;
-    }
-
-    // Vertical jitter within the row, and a horizontal pull-back so
-    // neighbours overlap slightly.
-    const jitter = (hashUnit(bird.sciName, 2) - 0.5) * base * 0.42;
-
-    placed.push({
-      ...bird,
-      x,
-      y: rowTop + jitter,
-      w,
-      h,
-      // Smaller birds in front, so a heron can't bury a wren.
-      z: Math.round(1000 - h),
-    });
-
-    x += w * (0.82 + hashUnit(bird.sciName, 3) * 0.14);
-    rowMax = Math.max(rowMax, h);
-  });
-
-  const lowest = placed.reduce((max, p) => Math.max(max, p.y + p.h), 0);
-  return { placed, height: lowest + base * 0.3 };
-}
+type Tile = PackedTile<{
+  key: string;
+  mask: MaskTable[string] | undefined;
+  ar: number;
+  weight: number;
+  bird: GalleryBird;
+  index: number;
+  flying: boolean;
+}>;
 
 export function Collage({
   birds,
@@ -90,53 +31,100 @@ export function Collage({
   onOpen: (index: number) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const [masks, setMasks] = useState<MaskTable | null>(null);
 
-  // Re-layout on resize. ResizeObserver rather than a window listener so it
-  // also reacts to the tray opening and squeezing the grid.
+  // Fetched rather than bundled: 777 KB of silhouettes (160 KB over the wire)
+  // has no business in the JavaScript payload, and only the collage needs it.
+  useEffect(() => {
+    let live = true;
+    fetch("/collage-masks.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => live && setMasks(data ?? {}))
+      .catch(() => live && setMasks({})); // no silhouettes: falls back to box packing
+    return () => {
+      live = false;
+    };
+  }, []);
+
   useEffect(() => {
     const element = container.current;
     if (!element) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setWidth(entry.contentRect.width),
-    );
+    const observer = new ResizeObserver(([entry]) => {
+      // A canvas roughly the shape of the space it sits in, tall enough that
+      // the cluster has somewhere to grow.
+      const w = entry.contentRect.width;
+      setSize({ w, h: Math.max(420, Math.min(900, w * 0.62)) });
+    });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
 
-  const { placed, height } = layout(birds, width);
+  // A fresh seed per mount, so every refresh rearranges the flock.
+  const seed = useMemo(() => Math.floor(Math.random() * 2147483646) + 1, []);
+
+  const tiles = useMemo<Tile[]>(() => {
+    if (!masks || size.w <= 0) return [];
+
+    // Deterministic within one render pass so a resize doesn't reshuffle
+    // mid-interaction, but reseeded on mount so a refresh does.
+    let state = seed;
+    const random = () => {
+      state = (state * 16807) % 2147483647;
+      return state / 2147483647;
+    };
+
+    const items = birds.map((bird, index) => {
+      const key = slug(bird.sciName);
+      const flying = bird.flight && random() < FLY_PROB;
+      return {
+        key,
+        // The flight pose has its own silhouette and proportions.
+        mask: masks[flying ? `${key}-2` : key],
+        ar: bird.ar ?? 0.9,
+        // Random for now — there's no "heard 400 times" here to scale by.
+        weight: 0.55 + random() * 1.1,
+        bird,
+        index,
+        flying,
+      };
+    });
+
+    return packCollage(items, size.w, size.h, masks, random) as Tile[];
+  }, [birds, masks, size.w, size.h, seed]);
 
   return (
-    <div className="collage" ref={container} style={{ height }}>
-      {placed.map((bird, i) => (
+    <div
+      className="collage"
+      ref={container}
+      style={{ height: size.h || undefined }}
+    >
+      {tiles.map((tile) => (
         <button
           type="button"
-          key={bird.id}
+          key={tile.bird.id}
           className="collage-bird"
-          style={{
-            left: bird.x,
-            top: bird.y,
-            width: bird.w,
-            height: bird.h,
-            zIndex: bird.z,
-          }}
-          onClick={() => onOpen(i)}
-          title={`${bird.comName} · ${bird.sciName}`}
+          style={{ left: tile.x, top: tile.y, width: tile.w, height: tile.h }}
+          onClick={() => onOpen(tile.index)}
+          title={`${tile.bird.comName} · ${tile.bird.sciName}`}
         >
-          {bird.art ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              {...NOPIN}
-              src={perchedSrc(bird.sciName)}
-              alt={bird.comName}
-              loading="lazy"
+          {tile.bird.art ? (
+            <BirdArt
+              src={
+                tile.flying
+                  ? flightSrc(tile.bird.sciName)
+                  : perchedSrc(tile.bird.sciName)
+              }
+              label={tile.bird.comName}
+              style={{ width: "100%", height: "100%", display: "block" }}
             />
           ) : (
-            <span className="portrait-empty" aria-hidden="true">
-              🪶
-            </span>
+            <span
+              className="portrait-empty"
+              aria-label={tile.bird.comName}
+              role="img"
+            />
           )}
-          <span className="sr-only">{bird.comName}</span>
         </button>
       ))}
     </div>

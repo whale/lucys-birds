@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { perchedSrc } from "@/lib/species-paths";
-import { NOPIN } from "@/lib/nopin";
+import { BirdArt } from "../bird-art";
 
 type Species = { sci: string; com: string; art: boolean };
 
@@ -12,6 +12,11 @@ export default function AddPage() {
   const [results, setResults] = useState<Species[]>([]);
   const [chosen, setChosen] = useState<Species | null>(null);
   const [song, setSong] = useState<File | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
+    null,
+  );
+  const [place, setPlace] = useState("");
+  const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +65,35 @@ export default function AddPage() {
     } catch {
       return undefined;
     }
+  }
+
+  /** Ask the phone where it is. One tap, no typing — the fast path. */
+  function useMyLocation() {
+    if (!navigator.geolocation) {
+      setError("This browser can't share a location.");
+      return;
+    }
+    setLocating(true);
+    setError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({
+          lat: Number(position.coords.latitude.toFixed(5)),
+          lon: Number(position.coords.longitude.toFixed(5)),
+        });
+        setLocating(false);
+      },
+      (cause) => {
+        // Denied is a choice, not a fault — say so plainly and move on.
+        setError(
+          cause.code === cause.PERMISSION_DENIED
+            ? "Location is off for this site. You can still name the place instead."
+            : "Couldn't work out where you are. You can name the place instead.",
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
   }
 
   async function save() {
@@ -115,6 +149,8 @@ export default function AddPage() {
       setChosen(null);
       setQuery("");
       setSong(null);
+      setCoords(null);
+      setPlace("");
       searchBox.current?.focus();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
@@ -178,12 +214,14 @@ export default function AddPage() {
                         bird she can recognise, not parsing Latin. */}
                     <span className="picker-thumb">
                       {s.art ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          {...NOPIN}
+                        <BirdArt
                           src={perchedSrc(s.sci)}
-                          alt=""
-                          loading="lazy"
+                          label=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            display: "block",
+                          }}
                         />
                       ) : (
                         <span className="picker-thumb-empty" aria-hidden="true">
@@ -210,8 +248,11 @@ export default function AddPage() {
             <div className="rec-row" style={{ gap: 16 }}>
               <span className="picker-thumb">
                 {chosen.art ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img {...NOPIN} src={perchedSrc(chosen.sci)} alt="" />
+                  <BirdArt
+                    src={perchedSrc(chosen.sci)}
+                    label=""
+                    style={{ width: "100%", height: "100%", display: "block" }}
+                  />
                 ) : (
                   <span className="picker-thumb-empty" aria-hidden="true">
                     🪶
@@ -230,6 +271,45 @@ export default function AddPage() {
                 change
               </button>
             </div>
+
+            <label>
+              Where you saw it — optional
+              <div className="actions">
+                <button
+                  type="button"
+                  className="chip"
+                  onClick={useMyLocation}
+                  disabled={locating || saving}
+                >
+                  {locating
+                    ? "finding you…"
+                    : coords
+                      ? "location saved ✓"
+                      : "use my location"}
+                </button>
+                {coords && (
+                  <button
+                    type="button"
+                    className="chip"
+                    onClick={() => setCoords(null)}
+                  >
+                    clear
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                placeholder="or name the spot — the pond at the park"
+                disabled={saving}
+              />
+              <span className="hint">
+                {coords
+                  ? `Pinned at ${coords.lat}, ${coords.lon}. It'll show on the map.`
+                  : "A pin puts it on the map. The name is what people read."}
+              </span>
+            </label>
 
             <label>
               Its song — optional
