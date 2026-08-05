@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { ImageResponse } from "next/og";
 import { serviceClient } from "@/lib/supabase";
 import speciesData from "@/data/species.json";
@@ -22,15 +20,26 @@ const ILLUSTRATED = new Set(
 
 const slug = (sciName: string) => sciName.toLowerCase().trim().replace(/\s+/g, "-");
 
-/** Illustrations must be inlined — the renderer has no access to the live site. */
-async function inline(sciName: string): Promise<string | null> {
+/**
+ * Illustrations have to be inlined as data URIs — the image renderer can't
+ * resolve relative URLs.
+ *
+ * Fetched over HTTP rather than read from disk: `public/` is served by the CDN
+ * and is not part of a serverless function's file bundle, so reading it here
+ * silently finds nothing and the card comes out empty.
+ */
+async function inline(origin: string, sciName: string): Promise<string | null> {
   try {
-    const file = path.join(process.cwd(), "public", "illustrations", `${slug(sciName)}.png`);
-    return `data:image/png;base64,${(await readFile(file)).toString("base64")}`;
+    const response = await fetch(`${origin}/illustrations/${slug(sciName)}.png`);
+    if (!response.ok) return null;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    return `data:image/png;base64,${buffer.toString("base64")}`;
   } catch {
     return null;
   }
 }
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lucys-birds.vercel.app";
 
 export default async function Image() {
   let birds: Array<{ sci_name: string }> = [];
@@ -48,7 +57,7 @@ export default async function Image() {
     console.error("opengraph-image query failed", cause);
   }
 
-  const portraits = (await Promise.all(birds.map((b) => inline(b.sci_name)))).filter(
+  const portraits = (await Promise.all(birds.map((b) => inline(SITE, b.sci_name)))).filter(
     (src): src is string => Boolean(src),
   );
 
