@@ -21,7 +21,10 @@ comment on column birds.place is
   'Optional human label for the spot, e.g. "the pond at the park". Shown instead of coordinates.';
 
 -- Rebuilt to carry the location through to the page.
-create or replace view collection as
+-- Dropped first: `create or replace view` cannot add a column in the middle of
+-- an existing view's column list, only append or change definitions.
+drop view if exists collection;
+create view collection as
 select
   b.id,
   b.sci_name,
