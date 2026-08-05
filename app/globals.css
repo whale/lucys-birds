@@ -398,6 +398,14 @@ button.chip {
 
 .bird-link {
   display: block;
+  width: 100%;
+  /* It's a <button> now that it opens the tray — without this it inherits the
+     browser's default chrome and every bird sits in a grey box. */
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
   text-decoration: none;
   color: inherit;
   border-radius: 10px;
