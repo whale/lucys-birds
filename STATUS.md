@@ -1,12 +1,34 @@
 # Status — Lucy's Birds
 
-Last updated: 2026-08-04
+Last updated: 2026-08-05
 
 ## Where things stand
 
-Working app, live database, both ways of adding a bird verified end to end. Not deployed yet.
+**Live at https://lucys-birds.vercel.app** — public collage, passcode-gated adding.
+
+Adding a bird Lucy saw works end to end in production. **Adding a recording does not** — the analyzer fails on Vercel, see below.
 
 Branch: `feat/upload-first-rebuild`. Not merged.
+
+## The one thing that's broken
+
+`api/analyze.py` fails in production:
+
+```
+ValueError: Cannot load imports from non-existent stub
+'/var/task/_vendor/librosa/__init__.pyi'
+```
+
+Vercel precompiles Python to bytecode and the `.pyi` stubs librosa's lazy loader
+needs don't survive the bundling. There's no documented way to turn that off.
+`EAGER_IMPORT=1` was tried and doesn't help — `attach_stub` raises before that
+flag is read.
+
+This is the second Vercel-specific wall for this function (the first: no
+`tflite-runtime` build exists for the Python versions Vercel offers). The
+platform is a poor fit for this workload. **Recommendation: move only the
+analyzer somewhere built for Python ML** — Modal, Fly.io, Cloud Run, or the Mac
+mini. Everything else stays on Vercel and keeps working. Decision pending.
 
 ## Done
 
