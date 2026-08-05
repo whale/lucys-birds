@@ -12,13 +12,25 @@ Branch: `feat/upload-first-rebuild`. **Not merged** — still needs a PR.
 
 ## What it does
 
-- Public collection page, illustrated, two-up on a phone
-- Tap a bird with a song to hear it; one plays at a time
-- Add a bird: type-ahead over 7,058 species, optional audio in the same step
-- Passcode to add, nothing to read
+- Public collection page — full width, illustrated, fluid from phone to desktop
+- **A page per bird**: large illustration with a perched / in-flight toggle, a
+  Wikipedia summary, genus, links out to Wikipedia and eBird, and every
+  recording with playback
+- Add a bird: type-ahead over 7,058 species, each result showing its
+  illustration, plus optional audio in the same step
+- Passcode to add, nothing to read. Six digits, numeric, centred, self-submitting
 - Lucy's bookmarked link unlocks her without typing
 - Share card showing her real birds and count, so the link previews properly
 - Installs to a homescreen
+- Pinterest's hover-to-save overlay suppressed site-wide
+
+## Design
+
+Tokens taken from the original AvianVisitors stylesheet so it reads as the same
+object: near-white paper (`#fcfcfb`), serif display with an italic eyebrow,
+monospace labels with wide letterspacing, and the original's three depth recipes
+(`--edge`, `--recess`, `--raised`) instead of flat borders. Full width with a
+56px gutter that shrinks fluidly.
 
 ## Verified in production
 
@@ -37,6 +49,17 @@ Clear them whenever Lucy wants to start properly:
 ```sql
 delete from bird_recordings; delete from birds;
 ```
+
+## Still missing from the original
+
+- **The actual collage.** The original arranges birds in an overlapping,
+  size-varied composition (`avian/frontend/apt.js` + `masks.json` + `dims.json`)
+  rather than a grid — that's its signature and it isn't ported. The biggest
+  remaining visual gap.
+- **Segmented pill filters** (the original's 1H / 12H / 24H / 7D / ALL and
+  COLLAGE / STATS / ATLAS controls with the sliding pill).
+- **Dark theme.** The original is fully variable-driven and flips cleanly.
+- **Spectrograms** on recordings.
 
 ## Next up
 
