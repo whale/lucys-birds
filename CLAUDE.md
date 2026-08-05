@@ -32,6 +32,24 @@ Next.js 15 (App Router) on Vercel, Supabase for Postgres and audio storage. No P
 
 **The recordings bucket is public.** Deliberate: visitors must be able to press play without a signed-URL round trip. Don't put anything in it that isn't meant to be heard by whoever has the link.
 
+## Locations are deliberately fuzzed — do not "fix" this
+
+Coordinates on `birds` are **snapped to a 0.1-degree grid** before they are
+stored. At Lucy's latitude that is a cell roughly 6.9 miles tall and 5.0 wide,
+so a published point is never more than ~4.3 miles from the real one.
+
+This is not sloppiness and it is not a rounding bug. Her eBird export contains
+metre-accurate coordinates for places called "Mimi's House", "Uncle Johnny's
+House" and "Neighborhood". This site is public and carries her name. Storing
+the exact figures would publish where a teenager and her family live.
+
+Snapping also collapses every bird recorded at the same house onto one point,
+which hides it twice over.
+
+If a future import or the add form starts writing precise coordinates, that is
+a privacy regression, not an accuracy improvement. Fuzz on the way in, so the
+database never holds the precise value at all.
+
 ## The gate
 
 Reading is public. Adding needs the passcode (`GATE_PASSCODE`).
