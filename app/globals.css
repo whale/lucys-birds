@@ -233,6 +233,15 @@ button.chip {
   object-fit: contain;
 }
 
+/* In the grid a placeholder needs a frame to read as a card. In the collage a
+   filled box is a hole punched in the flock — here it's just the feather. */
+.collage-bird .portrait-empty {
+  background: none;
+  box-shadow: none;
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  opacity: 0.55;
+}
+
 .collage-bird:hover,
 .collage-bird:focus-visible {
   /* Lifts out of the flock rather than being outlined — an outline round a

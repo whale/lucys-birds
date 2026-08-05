@@ -50,14 +50,25 @@ Clear them whenever Lucy wants to start properly:
 delete from bird_recordings; delete from birds;
 ```
 
+## Views
+
+Grid, collage, and map — switched by the original's recessed pill control, and
+remembered in localStorage.
+
+The **collage** is the overlapping, size-varied arrangement the original is
+built around. Positions are computed from the container width using each
+illustration's real aspect ratio (carried in `data/species.json`, from the
+original's `dims.json`); scale comes from a hash of the species name so it
+varies but stays stable across renders. Smaller birds sit in front.
+
+The **map has no data.** Nothing captures a location, so it says so rather than
+pretending. See below.
+
 ## Still missing from the original
 
-- **The actual collage.** The original arranges birds in an overlapping,
-  size-varied composition (`avian/frontend/apt.js` + `masks.json` + `dims.json`)
-  rather than a grid — that's its signature and it isn't ported. The biggest
-  remaining visual gap.
-- **Segmented pill filters** (the original's 1H / 12H / 24H / 7D / ALL and
-  COLLAGE / STATS / ATLAS controls with the sliding pill).
+- **Mask-based packing.** The original uses per-species silhouette masks
+  (`masks.json`, 795 KB) to interlock birds precisely. Ours overlaps by
+  computed offset — good, but not the real packing.
 - **Dark theme.** The original is fully variable-driven and flips cleanly.
 - **Spectrograms** on recordings.
 
@@ -67,6 +78,9 @@ delete from bird_recordings; delete from birds;
 - **A real name**, and a domain if it should live under whale.fyi.
 - **Import from eBird.** *Download My Data* gives a CSV of everything she's ever logged — her collection could start full instead of empty. Genuinely easy and probably the highest-value next thing.
 - **Generate missing illustrations.** Only 329 of 7,058 species have art. `avian/scripts/` is the Gemini pipeline that makes more in the same style; worth running for whatever she actually collects.
+- **Locations, for the map view.** Needs a `lat`/`lon` on `birds` and a way to
+  capture it when adding — either the phone's location at the time, or a place
+  picker. Until then the map tab is an empty state.
 - **Editing.** No way to remove a bird, replace a song, or fix a mistake except in SQL.
 - **Repo size.** `.git` is ~624 MB, mostly dead Pi-era history. Reclaimable, not urgent.
 
