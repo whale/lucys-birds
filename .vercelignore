@@ -1,0 +1,15 @@
+# Keep deploy uploads small and fast.
+#
+# avian/assets alone is 490 MB of print-resolution source art. It is only ever
+# read by scripts/build-illustrations.mjs on a developer's machine; the 56 MB
+# web-sized output in public/illustrations is committed and is what ships.
+# Including the source made `vercel deploy` push 534 MB and fail on upload.
+avian/
+model/
+supabase/
+docs/
+scripts/
+.screenshots/
+.playwright-mcp/
+README.upstream.md
+STATUS.md

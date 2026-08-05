@@ -72,8 +72,6 @@ next-env.d.ts
 .vercel
 .db-password.txt
 
-# Generated: built from avian/assets by scripts/build-illustrations.mjs
-public/illustrations/
 
 # Supabase CLI local scratch
 supabase/.temp/
