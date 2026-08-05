@@ -16,6 +16,10 @@ export const metadata: Metadata = {
     siteName: "Lucy's Birds",
   },
   twitter: { card: "summary_large_image" },
+  // Suppresses the Pinterest browser extension's hover-to-save button on every
+  // image. The artwork isn't ours to hand to Pinterest, and the overlay sits
+  // right on top of the birds.
+  other: { pinterest: "nopin" },
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "Lucy's Birds", statusBarStyle: "default" },
 };

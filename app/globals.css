@@ -1,17 +1,33 @@
-/* The cream ground is inherited from AvianVisitors — the illustrations were
-   generated on it, so anything else leaves a halo around every cutout. */
+/* Design tokens lifted from the original AvianVisitors stylesheet
+   (avian/frontend/styles.css) so this reads as the same object.
+   Near-white paper, not cream: the illustrations are transparent cutouts and
+   were always meant to sit on white. */
 
 :root {
-  --ground: #f4efe4;
-  --ink: #2a2622;
-  --ink-soft: #6b6357;
-  --rule: #d9d0bf;
-  --accent: #8a5a2b;
+  color-scheme: light;
+  --paper: #fcfcfb; /* near-pure white, faintest warm undertone */
+  --paper-2: #f3f2ee; /* recessed track */
+  --paper-3: #e8e6df; /* placeholder fill */
+  --ink: #1a1612;
+  --ink-2: #4a3f31;
+  --ink-soft: #908576;
+  --hairline: rgba(26, 22, 18, 0.14);
+  --pill: #fcfcfb;
 
-  --step-0: 1rem;
-  --step-1: 1.25rem;
-  --step-2: 1.75rem;
-  --step-3: 2.5rem;
+  /* Depth recipes rather than flat 1px borders — the original's whole
+     surface language is built from these three. */
+  --edge: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 0 0 1px rgba(26, 22, 18, 0.04);
+  --edge-lg: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 0 0 1px rgba(26, 22, 18, 0.06),
+    0 8px 28px rgba(26, 22, 18, 0.06);
+  --recess: inset 0 1px 2px rgba(26, 22, 18, 0.06), inset 0 0 0 1px rgba(26, 22, 18, 0.04);
+  --raised: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 0 1px rgba(26, 22, 18, 0.05),
+    0 1px 2px rgba(26, 22, 18, 0.07);
+
+  --serif: ui-serif, "Iowan Old Style", "Apple Garamond", Georgia, serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Full-bleed with a 56px gutter that shrinks rather than snapping. */
+  --gutter: clamp(20px, 4vw, 56px);
 }
 
 * {
@@ -22,80 +38,126 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--ground);
+  background: var(--paper);
   color: var(--ink);
-  font-family: ui-serif, Georgia, "Times New Roman", serif;
-  font-size: var(--step-0);
-  line-height: 1.5;
+}
+
+body {
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
 }
 
+a {
+  color: inherit;
+}
+
+/* ------------------------------------------------------------------ layout */
+
+/* Full width on purpose — the collection should fill the screen rather than
+   sit in a column. The gutter is the only constraint. */
 .page {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 2rem 1.25rem 5rem;
+  width: 100%;
+  padding: clamp(28px, 5vw, 56px) var(--gutter) 96px;
 }
 
 .masthead {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--rule);
+  gap: 20px 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--hairline);
 }
 
-.masthead h1 {
+.eyebrow {
+  display: block;
+  font: italic 400 clamp(13px, 1.4vw, 18px) / 1 var(--serif);
+  color: var(--ink-2);
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+}
+
+.display {
   margin: 0;
-  font-size: var(--step-3);
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font: 700 clamp(26px, 3.2vw, 44px) / 1 var(--serif);
+  letter-spacing: 0.01em;
 }
 
 .meta {
-  font-size: 0.875rem;
+  margin: 10px 0 0;
+  font: 10px/1.6 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--ink-soft);
-  font-variant-numeric: tabular-nums;
 }
 
-a.button,
-button {
-  font: inherit;
-  font-size: 0.9375rem;
-  padding: 0.625rem 1.125rem;
-  border: 1px solid var(--ink);
-  border-radius: 999px;
-  background: transparent;
+/* ----------------------------------------------------------------- controls */
+
+.chip,
+button.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--paper);
+  border: 0;
   color: var(--ink);
+  padding: 10px 15px 9px;
+  border-radius: 999px;
+  font: 10px/1 var(--mono);
+  letter-spacing: 0.18em;
+  text-transform: lowercase;
   text-decoration: none;
   cursor: pointer;
+  box-shadow: var(--raised);
+  transition: transform 160ms ease;
 }
 
-button[disabled] {
+.chip:hover {
+  transform: translateY(-1px);
+}
+.chip:active {
+  transform: translateY(0);
+}
+.chip[disabled] {
   opacity: 0.45;
   cursor: not-allowed;
+  transform: none;
+}
+.chip.ext::after {
+  content: "↗";
+  opacity: 0.6;
 }
 
-/* Needs the element in the selector: `a.button, button` above is specificity
-   0-1-1, so a bare `.button-primary` (0-1-0) loses to it and the fill silently
-   never applies — the main action ends up looking identical to the secondary. */
-a.button-primary,
-button.button-primary {
+.chip-solid {
   background: var(--ink);
-  color: var(--ground);
-  border-color: var(--ink);
+  color: var(--paper);
+  box-shadow: none;
 }
 
-/* ---------------------------------------------------------------- collage */
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip,
+  .chip:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------------- flock */
 
 .flock {
   display: grid;
-  /* 8.5rem fits two per row on a 375px phone, which a collage wants — one
-     enormous bird per screen reads as a list, not a collection. */
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-  gap: 1.5rem 1rem;
-  margin-top: 2.5rem;
+  /* Fluid: fills whatever width it's given, two-up on a phone. */
+  grid-template-columns: repeat(auto-fill, minmax(clamp(8.5rem, 14vw, 13rem), 1fr));
+  gap: clamp(28px, 3vw, 48px) clamp(16px, 2vw, 32px);
+  margin: clamp(32px, 5vw, 64px) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -104,203 +166,440 @@ button.button-primary {
   text-align: center;
 }
 
-.bird img {
+.bird-link {
   display: block;
-  width: 100%;
-  height: 9rem;
-  object-fit: contain;
-  mix-blend-mode: multiply; /* cutouts carry a little cream; multiply hides the seam */
+  text-decoration: none;
+  color: inherit;
+  border-radius: 10px;
+  padding: 8px;
+  transition: transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Only 329 of 7,058 species have artwork, so most birds Lucy adds won't have a
-   picture. A broken-image icon reads as "something went wrong"; this reads as
-   "this one's waiting for its portrait". */
-.bird-noart {
+.bird-link:hover {
+  transform: translateY(-3px);
+}
+
+.bird-link:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.portrait {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  height: 9rem;
-  border: 1px dashed var(--rule);
-  border-radius: 0.5rem;
+  height: clamp(7rem, 11vw, 11rem);
+}
+
+.portrait img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Only 329 of 7,058 species have artwork. A broken image reads as "something
+   went wrong"; this reads as "waiting for its portrait". */
+.portrait-empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: var(--paper-2);
+  box-shadow: var(--recess);
   color: var(--ink-soft);
-  font-size: 2.5rem;
-  line-height: 1;
+  font-size: 1.75rem;
 }
 
 .bird .com {
   display: block;
-  margin-top: 0.5rem;
-  font-size: 0.9375rem;
+  margin-top: 14px;
+  font: 400 clamp(14px, 1.1vw, 17px) / 1.3 var(--serif);
 }
 
 .bird .sci {
   display: block;
-  font-size: 0.8125rem;
-  font-style: italic;
+  margin-top: 2px;
+  font: italic 400 clamp(11px, 0.85vw, 13px) / 1.3 var(--serif);
   color: var(--ink-soft);
 }
 
-/* ------------------------------------------------------------- bird songs */
+.song-flag {
+  display: inline-block;
+  margin-top: 7px;
+  font: 9px/1 var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
 
-/* Only birds with a song are tappable, so the whole portrait becomes the
-   button rather than a small separate control — a big target, and it makes
-   the affordance obvious without any instructions. */
-.bird-play {
+/* -------------------------------------------------------------- bird detail */
+
+.detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: start;
+  margin-top: clamp(28px, 4vw, 48px);
+}
+
+@media (max-width: 800px) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.detail-figure {
   position: relative;
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
-
-.bird-play:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 3px;
-}
-
-.song-badge {
-  position: absolute;
-  right: 0.25rem;
-  bottom: 0.25rem;
   display: grid;
   place-items: center;
-  width: 1.875rem;
-  height: 1.875rem;
-  border-radius: 50%;
-  background: var(--ground);
-  border: 1px solid var(--ink);
-  color: var(--ink);
-  font-size: 0.6875rem;
-  line-height: 1;
-  /* Nudged: a play triangle looks off-centre when centred by its bounding box. */
-  padding-left: 0.125rem;
-  transition: transform 120ms ease, background-color 120ms ease;
+  aspect-ratio: 4 / 5;
+  padding: clamp(16px, 3vw, 36px);
+  background: var(--paper-2);
+  border-radius: 14px;
+  box-shadow: var(--recess);
 }
 
-.song-badge-on {
+.detail-figure img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* The original ships two poses per species — perched and in flight. Losing
+   that was losing half the artwork. */
+.pose-toggle {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  padding: 4px;
+  background: var(--paper-2);
+  border-radius: 999px;
+  box-shadow: var(--recess);
+}
+
+.pose-toggle button {
+  background: transparent;
+  border: 0;
+  color: var(--ink-soft);
+  font: 9px/1 var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.pose-toggle button[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--pill);
+  box-shadow: var(--raised);
+}
+
+.detail h1 {
+  margin: 0;
+  font: 700 clamp(26px, 3vw, 40px) / 1.05 var(--serif);
+}
+
+.detail .sci-name {
+  margin: 6px 0 0;
+  font: italic 400 clamp(14px, 1.2vw, 18px) / 1.3 var(--serif);
+  color: var(--ink-soft);
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 22px 0;
+}
+
+.stat {
+  background: var(--paper-2);
+  border-radius: 6px;
+  padding: 12px 14px;
+  box-shadow: var(--recess);
+}
+
+.stat .n {
+  display: block;
+  font: 800 17px/1 var(--serif);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat .lbl {
+  display: block;
+  margin-top: 5px;
+  font: 9px/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.desc {
+  margin: 0 0 20px;
+  font: 400 clamp(14px, 1.05vw, 16px) / 1.65 var(--serif);
+  color: var(--ink-2);
+  max-width: 62ch;
+}
+
+.desc-source {
+  font: 9px/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------------- recordings */
+
+.recordings {
+  margin-top: clamp(32px, 5vw, 56px);
+  border-top: 1px solid var(--hairline);
+  padding-top: 22px;
+}
+
+.recordings h2 {
+  margin: 0 0 14px;
+  font: 10px/1 var(--mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.rec-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-width: 640px;
+}
+
+.rec-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--paper-2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: var(--recess);
+}
+
+.rec-play {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: var(--raised);
+  font-size: 11px;
+  padding-left: 2px; /* a play triangle looks off-centre when box-centred */
+  transition: transform 160ms ease;
+}
+
+.rec-play[aria-pressed="true"] {
   background: var(--ink);
-  color: var(--ground);
+  color: var(--paper);
   padding-left: 0;
 }
 
-.bird-play:hover .song-badge {
-  transform: scale(1.08);
+.rec-play:hover {
+  transform: scale(1.06);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .song-badge {
-    transition: none;
-  }
-  .bird-play:hover .song-badge {
-    transform: none;
-  }
+.rec-when {
+  font: 10px/1.5 var(--mono);
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
 }
 
-/* ------------------------------------------------------------------ forms */
+/* --------------------------------------------------------------------- forms */
 
 .stack {
   display: grid;
-  gap: 1.25rem;
-  max-width: 32rem;
-  margin-top: 2rem;
+  gap: 22px;
+  max-width: 34rem;
+  margin-top: clamp(28px, 4vw, 44px);
 }
 
 label {
   display: grid;
-  gap: 0.375rem;
-  font-size: 0.9375rem;
+  gap: 8px;
+  font: 10px/1 var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
-input,
+input[type="search"],
+input[type="file"],
 textarea {
-  font: inherit;
-  font-size: 1rem; /* below 16px, iOS zooms the whole page on focus */
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: #fff;
+  font: 400 16px/1.4 var(--serif); /* below 16px, iOS zooms the page on focus */
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--paper-2);
+  box-shadow: var(--recess);
   color: var(--ink);
   width: 100%;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+input[type="search"]:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
 }
 
 .hint {
-  font-size: 0.8125rem;
+  font: 10px/1.5 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: none;
   color: var(--ink-soft);
 }
 
 .notice {
-  padding: 0.875rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--rule);
-  background: #fff;
-  font-size: 0.9375rem;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--paper-2);
+  box-shadow: var(--recess);
+  font: 400 15px/1.5 var(--serif);
 }
 
 .notice-error {
-  border-color: #b4462f;
-  color: #8c3320;
+  background: #fbf1ee;
+  color: #7d3320;
+  box-shadow: inset 0 0 0 1px rgba(125, 51, 32, 0.18);
 }
 
 .empty {
-  margin-top: 4rem;
+  margin-top: clamp(48px, 8vw, 96px);
   text-align: center;
   color: var(--ink-soft);
+  font: italic 400 clamp(15px, 1.4vw, 19px) / 1.5 var(--serif);
 }
 
-/* ----------------------------------------------------------- species picker */
+/* ------------------------------------------------------------ species picker */
 
 .picker {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.375rem;
+  gap: 8px;
 }
 
 .picker button {
-  display: block;
+  /* The illustration sits with the name, so she's choosing a bird she can see
+     rather than reading Latin. */
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
   width: 100%;
   text-align: left;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: #fff;
-  padding: 0.75rem 0.875rem;
-  /* Comfortably past the 44px minimum touch target — this is the control a
-     child taps outdoors, one-handed, probably in a hurry. */
-  min-height: 3.25rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--paper-2);
+  box-shadow: var(--recess);
+  padding: 10px 14px;
+  min-height: 68px;
+  cursor: pointer;
+  transition: box-shadow 160ms ease;
 }
 
 .picker button:hover,
 .picker button:focus-visible {
-  border-color: var(--ink);
+  box-shadow: var(--raised);
+  outline: none;
+}
+
+.picker-thumb {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 48px;
+}
+
+.picker-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.picker-thumb-empty {
+  color: var(--ink-soft);
+  font-size: 1.1rem;
 }
 
 .picker-name {
   display: block;
-  font-size: 1.0625rem;
+  font: 400 16px/1.25 var(--serif);
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .picker-sci {
   display: block;
-  font-size: 0.8125rem;
-  font-style: italic;
+  margin-top: 2px;
+  font: italic 400 12px/1.3 var(--serif);
   color: var(--ink-soft);
+  text-transform: none;
+  letter-spacing: normal;
 }
 
-.picker-flag {
-  display: inline-block;
-  margin-top: 0.25rem;
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent);
+/* ------------------------------------------------------------------- passcode */
+
+.gate {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+  text-align: center;
 }
 
-.actions {
-  display: flex;
-  gap: 0.625rem;
-  flex-wrap: wrap;
+.gate-inner {
+  display: grid;
+  justify-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 24rem;
+}
+
+/* Six separate boxes rather than one field: it shows how many digits are
+   wanted without saying so, and it looks like the thing it is. */
+.code-input {
+  font: 400 clamp(26px, 7vw, 34px) / 1 var(--mono);
+  letter-spacing: clamp(0.6em, 3.4vw, 1em);
+  text-indent: clamp(0.6em, 3.4vw, 1em); /* balances the trailing letter-space */
+  text-align: center;
+  width: 100%;
+  padding: 18px 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--paper-2);
+  box-shadow: var(--recess);
+  color: var(--ink);
+}
+
+.code-input::placeholder {
+  color: var(--paper-3);
+}
+
+.code-input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }

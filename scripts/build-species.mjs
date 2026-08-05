@@ -16,18 +16,22 @@ const OUT = "data/species.json";
 
 const labels = JSON.parse(await readFile(LABELS, "utf8"));
 
-// Illustrations are named by scientific name in kebab-case, with an optional
-// "-2" suffix for the in-flight pose. Strip that to get the species.
-const illustrated = new Set(
-  (await readdir(ART))
-    .filter((name) => name.endsWith(".png"))
-    .map((name) => name.replace(/-2\.png$/, "").replace(/\.png$/, "")),
-);
+// Illustrations are named by scientific name in kebab-case, with a "-2" suffix
+// for the in-flight pose. Both are tracked: the bird page lets you switch
+// between poses, and not every species necessarily has the second file.
+const files = (await readdir(ART)).filter((name) => name.endsWith(".png"));
+const perched = new Set(files.filter((n) => !n.endsWith("-2.png")).map((n) => n.replace(/\.png$/, "")));
+const flight = new Set(files.filter((n) => n.endsWith("-2.png")).map((n) => n.replace(/-2\.png$/, "")));
 
 const slug = (sci) => sci.toLowerCase().trim().replace(/\s+/g, "-");
 
 const species = Object.entries(labels)
-  .map(([sci, com]) => ({ sci, com, art: illustrated.has(slug(sci)) }))
+  .map(([sci, com]) => ({
+    sci,
+    com,
+    art: perched.has(slug(sci)),
+    flight: flight.has(slug(sci)),
+  }))
   .sort((a, b) => {
     // Illustrated first, then alphabetical by the name Lucy will actually read.
     if (a.art !== b.art) return a.art ? -1 : 1;
@@ -38,4 +42,5 @@ await mkdir("data", { recursive: true });
 await writeFile(OUT, JSON.stringify(species));
 
 const withArt = species.filter((s) => s.art).length;
-console.log(`${species.length} species -> ${OUT} (${withArt} with artwork)`);
+const withFlight = species.filter((s) => s.flight).length;
+console.log(`${species.length} species -> ${OUT} (${withArt} with artwork, ${withFlight} with a flight pose)`);

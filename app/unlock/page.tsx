@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
+const CODE_LENGTH = 6;
 
 function UnlockForm() {
   const router = useRouter();
@@ -11,20 +12,19 @@ function UnlockForm() {
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
-  // Only allow relative paths back. An absolute URL here would let someone
-  // craft a link that sends Lucy to another site after she unlocks.
-  const raw = params.get("next") ?? "/spot";
-  const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/spot";
+  // Only relative paths. An absolute URL here would let someone craft a link
+  // that sends Lucy somewhere else the moment she unlocks.
+  const raw = params.get("next") ?? "/add";
+  const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/add";
 
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
+  async function submit(code: string) {
     setChecking(true);
     setError(null);
     try {
       const response = await fetch("/api/unlock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passcode }),
+        body: JSON.stringify({ passcode: code }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "That didn't work.");
@@ -38,45 +38,52 @@ function UnlockForm() {
     }
   }
 
-  return (
-    <form className="stack" onSubmit={submit}>
-      <label>
-        Passcode
-        <input
-          // numeric keypad on a phone, and the browser offers the saved code
-          type="password"
-          inputMode="numeric"
-          autoComplete="current-password"
-          value={passcode}
-          onChange={(e) => setPasscode(e.target.value)}
-          autoFocus
-          required
-        />
-        <span className="hint">
-          You only need this once on each device. Ask a grown-up if you don&rsquo;t know it.
-        </span>
-      </label>
+  function onChange(value: string) {
+    // Digits only, so a stray character can't sit invisibly in the field.
+    const digits = value.replace(/\D/g, "").slice(0, CODE_LENGTH);
+    setPasscode(digits);
+    setError(null);
+    // Submits itself on the sixth digit — there's nothing left to decide.
+    if (digits.length === CODE_LENGTH) void submit(digits);
+  }
 
+  return (
+    <div className="gate-inner">
       <div>
-        <button className="button-primary" type="submit" disabled={checking || !passcode}>
-          {checking ? "Checking…" : "Unlock"}
-        </button>
+        <span className="eyebrow">Lucy&rsquo;s birds</span>
+        <h1 className="display" style={{ fontSize: "clamp(20px, 2.2vw, 28px)" }}>
+          ENTER THE CODE
+        </h1>
       </div>
 
+      <input
+        className="code-input"
+        // A numeric keypad on a phone, and no autocorrect or spellcheck noise.
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete="one-time-code"
+        maxLength={CODE_LENGTH}
+        placeholder="······"
+        aria-label={`${CODE_LENGTH} digit passcode`}
+        value={passcode}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={checking}
+        autoFocus
+      />
+
+      <p className="hint">
+        {checking ? "Checking…" : "Six digits. You only need this once on each device."}
+      </p>
+
       {error && <p className="notice notice-error">{error}</p>}
-    </form>
+    </div>
   );
 }
 
 export default function UnlockPage() {
   return (
-    <main className="page">
-      <header className="masthead">
-        <h1>Enter the passcode</h1>
-        <Link className="button" href="/">
-          Back to the birds
-        </Link>
-      </header>
+    <main className="gate">
       <Suspense fallback={null}>
         <UnlockForm />
       </Suspense>

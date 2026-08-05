@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { RECORDINGS_BUCKET, serviceClient } from "@/lib/supabase";
-import { Collection, type Bird } from "./collection";
+import { serviceClient } from "@/lib/supabase";
+import { hasArt, perchedSrc, slug } from "@/lib/species";
 
 export const dynamic = "force-dynamic";
+
+type Bird = {
+  id: number;
+  sci_name: string;
+  com_name: string;
+  audio_path: string | null;
+};
 
 export default async function CollectionPage() {
   let birds: Bird[] = [];
@@ -11,7 +18,7 @@ export default async function CollectionPage() {
   try {
     const { data, error } = await serviceClient()
       .from("collection")
-      .select("id, sci_name, com_name, added_at, audio_path, audio_seconds");
+      .select("id, sci_name, com_name, audio_path");
     if (error) throw error;
     birds = (data ?? []) as Bird[];
   } catch (cause) {
@@ -23,25 +30,24 @@ export default async function CollectionPage() {
 
   const withSongs = birds.filter((b) => b.audio_path).length;
 
-  // The bucket is public, so visitors stream straight from storage rather than
-  // waiting on a signed URL round trip before anything can play.
-  const audioBase = `${process.env.SUPABASE_URL}/storage/v1/object/public/${RECORDINGS_BUCKET}`;
-
   return (
     <main className="page">
       <header className="masthead">
         <div>
-          <h1>Lucy&rsquo;s Birds</h1>
+          <span className="eyebrow">Lucy&rsquo;s</span>
+          <h1 className="display">BIRD COLLECTION</h1>
           {birds.length > 0 && (
             <p className="meta">
-              {birds.length} {birds.length === 1 ? "bird" : "birds"}
-              {withSongs > 0 && <> &middot; {withSongs} with songs you can hear</>}
+              {birds.length} {birds.length === 1 ? "species" : "species"}
+              {withSongs > 0 && ` · ${withSongs} with songs`}
             </p>
           )}
         </div>
-        <Link className="button" href="/add">
-          Add a bird
-        </Link>
+        <div className="actions">
+          <Link className="chip" href="/add">
+            add a bird
+          </Link>
+        </div>
       </header>
 
       {loadError && (
@@ -56,7 +62,35 @@ export default async function CollectionPage() {
         </p>
       )}
 
-      {birds.length > 0 && <Collection birds={birds} audioBase={audioBase} />}
+      {birds.length > 0 && (
+        <ul className="flock">
+          {birds.map((bird) => (
+            <li className="bird" key={bird.id}>
+              {/* Every bird now leads somewhere, like the original — the
+                  collage was never just a picture wall. */}
+              <Link className="bird-link" href={`/bird/${slug(bird.sci_name)}`}>
+                <span className="portrait">
+                  {hasArt(bird.sci_name) ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={perchedSrc(bird.sci_name)}
+                      alt={bird.com_name}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="portrait-empty" aria-hidden="true">
+                      🪶
+                    </span>
+                  )}
+                </span>
+                <span className="com">{bird.com_name}</span>
+                <span className="sci">{bird.sci_name}</span>
+                {bird.audio_path && <span className="song-flag">song</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

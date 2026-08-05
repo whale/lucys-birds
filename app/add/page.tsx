@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { perchedSrc } from "@/lib/species-paths";
 
 type Species = { sci: string; com: string; art: boolean };
 
@@ -15,9 +16,8 @@ export default function AddPage() {
   const [error, setError] = useState<string | null>(null);
   const searchBox = useRef<HTMLInputElement>(null);
 
-  // Search as she types. Debounced so a fast typist doesn't fire a request per
-  // keystroke, and aborted on change so a slow early response can't overwrite
-  // the results for what she's typed since.
+  // Debounced so a fast typist doesn't fire a request per keystroke, and
+  // aborted on change so a slow early response can't overwrite newer results.
   useEffect(() => {
     if (chosen) return;
     const controller = new AbortController();
@@ -41,7 +41,7 @@ export default function AddPage() {
     };
   }, [query, chosen]);
 
-  /** Read the duration without uploading. Not worth failing an add over. */
+  /** Read the duration locally. Not worth failing an add over. */
   async function durationOf(file: File): Promise<number | undefined> {
     try {
       const url = URL.createObjectURL(file);
@@ -73,8 +73,6 @@ export default function AddPage() {
       if (!started.ok) throw new Error(result.error ?? "That didn't save.");
 
       if (song && result.signedUrl) {
-        // The original file goes up as-is. Converting it would only make it
-        // bigger, and every browser plays what an iPhone records.
         const put = await fetch(result.signedUrl, {
           method: "PUT",
           headers: { "Content-Type": song.type || "audio/mp4" },
@@ -115,10 +113,17 @@ export default function AddPage() {
   return (
     <main className="page">
       <header className="masthead">
-        <h1>Add a bird</h1>
-        <Link className="button" href="/">
-          Back to the collection
-        </Link>
+        <div>
+          <span className="eyebrow">Lucy&rsquo;s birds</span>
+          <h1 className="display" style={{ fontSize: "clamp(22px, 2.4vw, 32px)" }}>
+            ADD A BIRD
+          </h1>
+        </div>
+        <div className="actions">
+          <Link className="chip" href="/">
+            all birds
+          </Link>
+        </div>
       </header>
 
       <div className="stack">
@@ -131,13 +136,13 @@ export default function AddPage() {
         {!chosen ? (
           <>
             <label>
-              Which bird?
+              Which bird
               <input
                 ref={searchBox}
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Start typing — blue jay, robin, wren…"
+                placeholder="blue jay, robin, wren…"
                 autoFocus
               />
             </label>
@@ -152,9 +157,22 @@ export default function AddPage() {
                       setSaved(null);
                     }}
                   >
-                    <span className="picker-name">{s.com}</span>
-                    <span className="picker-sci">{s.sci}</span>
-                    {!s.art && <span className="picker-flag">no illustration yet</span>}
+                    {/* The illustration sits with the name so she's picking a
+                        bird she can recognise, not parsing Latin. */}
+                    <span className="picker-thumb">
+                      {s.art ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={perchedSrc(s.sci)} alt="" loading="lazy" />
+                      ) : (
+                        <span className="picker-thumb-empty" aria-hidden="true">
+                          🪶
+                        </span>
+                      )}
+                    </span>
+                    <span>
+                      <span className="picker-name">{s.com}</span>
+                      <span className="picker-sci">{s.sci}</span>
+                    </span>
                   </button>
                 </li>
               ))}
@@ -165,15 +183,28 @@ export default function AddPage() {
           </>
         ) : (
           <>
-            <p className="notice">
-              <strong>{chosen.com}</strong> <em>{chosen.sci}</em>{" "}
-              <button type="button" onClick={() => setChosen(null)} style={{ marginLeft: "0.5rem" }}>
-                Change
+            <div className="rec-row" style={{ gap: 16 }}>
+              <span className="picker-thumb">
+                {chosen.art ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={perchedSrc(chosen.sci)} alt="" />
+                ) : (
+                  <span className="picker-thumb-empty" aria-hidden="true">
+                    🪶
+                  </span>
+                )}
+              </span>
+              <span style={{ flex: 1 }}>
+                <span className="picker-name">{chosen.com}</span>
+                <span className="picker-sci">{chosen.sci}</span>
+              </span>
+              <button type="button" className="chip" onClick={() => setChosen(null)}>
+                change
               </button>
-            </p>
+            </div>
 
             <label>
-              Its song <span className="hint">(optional)</span>
+              Its song — optional
               <input
                 type="file"
                 accept="audio/*"
@@ -187,9 +218,9 @@ export default function AddPage() {
               </span>
             </label>
 
-            <div>
-              <button className="button-primary" onClick={save} disabled={saving}>
-                {saving ? (song ? "Uploading the song…" : "Adding…") : "Add to my collection"}
+            <div className="actions">
+              <button className="chip chip-solid" onClick={save} disabled={saving}>
+                {saving ? (song ? "uploading the song…" : "adding…") : "add to my collection"}
               </button>
             </div>
           </>
