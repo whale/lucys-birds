@@ -38,18 +38,15 @@ async function speciesFromCode(code: string): Promise<{ sci: string; com: string
     if (!response.ok) return null;
     const html = await response.text();
 
-    // The page titles itself with the common name and carries the scientific
-    // name in an <em>/italic near it. Try the structured hints first.
-    const sci =
-      html.match(/<i[^>]*>\s*([A-Z][a-z]+ [a-z-]+)\s*<\/i>/)?.[1] ??
-      html.match(/<em[^>]*>\s*([A-Z][a-z]+ [a-z-]+)\s*<\/em>/)?.[1] ??
-      html.match(/"scientificName"\s*:\s*"([^"]+)"/)?.[1] ??
-      null;
+    // Merlin marks the scientific name with its own class — the reliable hook.
+    //   <div class="sciName" ...>Sterna paradisaea</div>
+    const sci = html.match(/class="sciName"[^>]*>\s*([^<]+?)\s*</)?.[1] ?? null;
 
-    const com =
-      html.match(/<title>\s*([^<|]+?)\s*(?:\||<)/)?.[1]?.trim() ??
-      html.match(/"name"\s*:\s*"([^"]+)"/)?.[1] ??
-      null;
+    // The title reads "Check out this bird - Arctic Tern", so the common name
+    // is whatever follows the last dash. Only a fallback: the scientific name
+    // above is what we actually match on.
+    const rawTitle = html.match(/<title>\s*([^<]+?)\s*<\/title>/)?.[1] ?? "";
+    const com = rawTitle.split(/\s[-–—]\s/).pop()?.trim() || null;
 
     if (sci) return { sci: sci.trim(), com: (com ?? sci).trim() };
     if (com) return { sci: "", com };
