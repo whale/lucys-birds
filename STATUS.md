@@ -4,83 +4,54 @@ Last updated: 2026-08-05
 
 ## Where things stand
 
-**Live at https://lucys-birds.vercel.app** — public collage, passcode-gated adding.
+**Live and working: https://lucys-birds.vercel.app**
 
-Adding a bird Lucy saw works end to end in production. **Adding a recording does not** — the analyzer fails on Vercel, see below.
+A public showcase of Lucy's bird collection with playable songs. Everything in the current scope is built, deployed and verified in production.
 
-Branch: `feat/upload-first-rebuild`. Not merged.
+Branch: `feat/upload-first-rebuild`. **Not merged** — still needs a PR.
 
-## The one thing that's broken
+## What it does
 
-`api/analyze.py` fails in production:
+- Public collection page, illustrated, two-up on a phone
+- Tap a bird with a song to hear it; one plays at a time
+- Add a bird: type-ahead over 7,058 species, optional audio in the same step
+- Passcode to add, nothing to read
+- Lucy's bookmarked link unlocks her without typing
+- Share card showing her real birds and count, so the link previews properly
+- Installs to a homescreen
 
+## Verified in production
+
+- Added a bird with a song end to end; it appears and plays
+- Audio streams publicly with no auth — a visitor can hear it
+- Share card renders with real illustrations (253 KB PNG)
+- Valid link key unlocks and strips itself from the URL; the old passcode no longer works as a key; a cold visit still gets the gate; the key is refused on APIs
+- Collection page is public
+
+## Contents right now
+
+26 birds. **25 are placeholder** — common North American species I seeded so the page wasn't empty. One is a Eurasian Magpie carrying a real 30-second recording, which is what demonstrates playback.
+
+Clear them whenever Lucy wants to start properly:
+
+```sql
+delete from bird_recordings; delete from birds;
 ```
-ValueError: Cannot load imports from non-existent stub
-'/var/task/_vendor/librosa/__init__.pyi'
-```
-
-Vercel precompiles Python to bytecode and the `.pyi` stubs librosa's lazy loader
-needs don't survive the bundling. There's no documented way to turn that off.
-`EAGER_IMPORT=1` was tried and doesn't help — `attach_stub` raises before that
-flag is read.
-
-This is the second Vercel-specific wall for this function (the first: no
-`tflite-runtime` build exists for the Python versions Vercel offers). The
-platform is a poor fit for this workload. **Recommendation: move only the
-analyzer somewhere built for Python ML** — Modal, Fly.io, Cloud Run, or the Mac
-mini. Everything else stays on Vercel and keeps working. Decision pending.
-
-## Done
-
-**The fork**
-- `Twarner491/AvianVisitors` → `whale/lucys-birds`
-- Removed the Pi engine: recording daemon, folder watcher, SQLite, PHP API, Caddy, systemd templates, bash installer, e-ink frame, tflite models. Recoverable from git history.
-- Kept the art: 666 illustrations, 157 cutouts, the original collage frontend as reference, the Gemini illustration pipeline, the BirdNET labels.
-
-**Infrastructure**
-- Supabase project `lucys-birds` (ref `elmxrscgpdtiqgpltchm`, us-east-1, in `hi-whalefyi's projects`)
-- Schema applied via migration — `recordings`, `sightings`, `life_list` view
-- Private storage bucket `recordings` created in the same migration
-- `.env.local` written and gitignored; DB password in `.db-password.txt`, also gitignored
-
-**The app**
-- Collage page showing the life list with illustrations
-- "Add a bird you saw" — type-ahead over 7,058 species, illustrated ones first
-- "Add a recording" — browser-side `.m4a` → WAV, signed direct-to-storage upload
-- BirdNET analyzer as a Vercel Python function
-- Illustration build: 417 MB → 56 MB
-
-## Verified
-
-- `pnpm build` passes, 8 routes
-- Searched "blue jay", picked it, saved it — wrote to the live database, appeared on the collage with its illustration and "spotted 1×". Test row deleted afterwards.
-- `/add` renders correctly at 430 px
-- Missing config fails loud with the specific variable name, not a blank page
-
-**Not verified:** the analyzer. It only runs on Vercel and nothing is deployed, so no recording has been through BirdNET yet. That's the biggest open risk.
 
 ## Next up
 
-1. **Deploy to Vercel and put a real recording through it.** Until that happens the audio half is written, not working.
-   - The Python bundle (birdnetlib + librosa + tflite-runtime) is chunky. If the deploy fails on size, set `VERCEL_SUPPORT_LARGE_FUNCTIONS=1` — raises the ceiling from 500 MB to 5 GB.
-2. **Port the real collage.** Birds are a plain grid right now. The original packs them into an overlapping collage via `avian/frontend/apt.js` + `masks.json`/`dims.json`. That's the whole visual point and it isn't done.
-3. **Fallback for species with no illustration.** Only 329 of 7,058 have art; currently a broken image.
-4. **Let Lucy reject a wrong guess.** Schema and view already support it, no UI.
-5. **Play recordings back.** Stored, but nothing plays them.
-6. **Set lat/lon** in `.env.local` — meaningfully improves BirdNET accuracy.
-7. **Favicon.** 404s.
-8. **Decide on a gate.** No auth at all. On a public URL, anything uploaded is world-readable.
+- **Merge the branch.** Everything is on `feat/upload-first-rebuild`.
+- **A real name**, and a domain if it should live under whale.fyi.
+- **Import from eBird.** *Download My Data* gives a CSV of everything she's ever logged — her collection could start full instead of empty. Genuinely easy and probably the highest-value next thing.
+- **Generate missing illustrations.** Only 329 of 7,058 species have art. `avian/scripts/` is the Gemini pipeline that makes more in the same style; worth running for whatever she actually collects.
+- **Editing.** No way to remove a bird, replace a song, or fix a mistake except in SQL.
+- **Repo size.** `.git` is ~624 MB, mostly dead Pi-era history. Reclaimable, not urgent.
 
 ## Decisions worth remembering
 
-- **One list, two sources.** Spotted and heard birds share the `sightings` table. Splitting them would fork the collage.
-- **Audio converts in the browser.** Vercel has no ffmpeg; Safari has an AAC decoder. Don't move it server-side.
-- **Uploads bypass the server.** Vercel caps bodies at 4.5 MB; long recordings exceed it.
-- **Supabase org choice cost $10/month.** `hi-whalefyi's projects` is Pro and already had three projects; Pro covers only the first. Matthew accepted the cost. Worth checking the org before creating a project anywhere.
-
-## Open questions
-
-- Real name for the project
-- Rough lat/lon (two decimals is plenty — not the exact address)
-- whale.fyi domain? If so, does it join the `/stuff` menu?
-- The other two Supabase orgs hold `buddy` and five older projects — Matthew mentioned deleting them, nothing has been touched.
+- **No identification here, ever.** Merlin and eBird do it better. BirdNET was tried on Vercel and failed twice (no `tflite-runtime` build for Vercel's Python versions; then TensorFlow broke on Vercel's bytecode compilation). Recorded in git history — don't relitigate.
+- **Collection, not log.** One row per bird. Dates order things and stay out of the UI.
+- **Audio uploads as recorded.** Converting made it bigger for no gain.
+- **Public audio bucket** so visitors can press play with no round trip.
+- **Link key ≠ passcode.** The link skips rate limiting, so it's long and random and separately rotatable.
+- **Supabase costs $10/month** — the `hi-whalefyi's projects` org is Pro and this is its fourth project. Accepted deliberately.

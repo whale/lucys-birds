@@ -4,69 +4,63 @@ Inherits `~/Projects/CLAUDE.md` and the global rules. This file covers what's sp
 
 ## What this is
 
-An upload-first bird collage for Matthew's daughter Lucy. She records a bird on her iPhone, sends it here, BirdNET identifies it, and it joins the collage.
+A **public showcase** of the birds Lucy (15) has collected, with their songs. She sends the link to people; they look and listen.
 
-Forked from [AvianVisitors](https://github.com/Twarner491/AvianVisitors) (itself a fork of BirdNET-Pi), then gutted. See `README.md` for the full lineage.
+Live at https://lucys-birds.vercel.app. Forked from AvianVisitors, then gutted — see `README.md`.
 
-**Working name.** Don't get attached to "Lucy's Birds" in copy or filenames — it's placeholder.
+**Working name.** Don't get attached to "Lucy's Birds" in copy or filenames.
 
-## The one thing to keep straight
+## The two things to keep straight
 
-**There is no Raspberry Pi and no microphone.** The upstream project is a listening station: a mic in a window, a daemon watching a folder, SQLite on an SD card. All of that was deliberately removed.
+**1. This app does not identify birds.** Lucy uses Merlin and eBird for that. There is no model here, no confidence score, no "is this right?" step. If a change starts adding identification, stop — that problem is solved better elsewhere and was deliberately removed.
 
-If a change starts reintroducing a folder watcher, a long-running process, a systemd service, PHP, or SQLite — stop. That's drifting back toward the Pi architecture, and it doesn't fit Vercel.
+The history is worth knowing so it isn't repeated: BirdNET was tried on Vercel and failed twice — `tflite-runtime` publishes no build for the Python versions Vercel offers, and full TensorFlow then broke on Vercel's bytecode compilation stripping librosa's lazy-import stubs. Both are recorded in git history. Don't relitigate it.
 
-Everything is request-driven: one upload, one analysis, one response.
+**2. It's a collection, not a log.** One row per bird, not one per sighting. She's showing what she's got, not keeping a diary. Dates exist for ordering and stay out of the UI.
 
 ## Stack
 
-- **Next.js 15** (App Router) on Vercel — the pages and the read API
-- **Python function** (`api/analyze.py`) on Vercel — BirdNET via `birdnetlib`
-- **Supabase** — Postgres for the data, Storage bucket `recordings` for the audio
-
-Mixing a Next.js app with a root-level `api/*.py` function is intentional. Keep the Python out of `app/api/` — that's Next's router and it will not serve Python.
-
-## Constraints that shaped the design
-
-Don't "fix" these without knowing why they're here:
-
-- **Vercel has no `ffmpeg`.** Audio conversion happens in the browser (`lib/audio.ts`) using the platform AAC decoder. Don't move it server-side.
-- **Vercel caps request bodies at 4.5 MB.** Uploads go phone → storage via a signed URL, never through a function. Don't route file bytes through an API route.
-- **Vercel has no persistent disk.** Nothing may be written to the filesystem and expected to survive. Temp files inside a single invocation are fine.
-- **`tflite-runtime` cannot be used.** Its last release ships wheels for Python 3.8–3.11; Vercel only offers 3.12/3.13/3.14. Successor `ai-edge-litert` has the same gap. Verified by resolving both against linux x86_64 / cp312 — no distribution exists. `api/requirements.txt` uses full `tensorflow` instead, which birdnetlib falls back to. Don't "optimise" it back to tflite-runtime.
-- **The Python bundle needs `VERCEL_SUPPORT_LARGE_FUNCTIONS=1`.** TensorFlow blows past the standard 500 MB Python limit; that env var raises it to 5 GB. `vercel.json` also has `excludeFiles` keeping `avian/` (490 MB of art) out of the function bundle — without it the deploy fails on size no matter what.
-- **The analyzer does not currently work on Vercel.** Deployed and confirmed failing with `ValueError: Cannot load imports from non-existent stub '/var/task/_vendor/librosa/__init__.pyi'`. Vercel precompiles Python to bytecode and the `.pyi` stubs librosa's lazy loader needs don't survive; there is no documented way to disable that compilation. `EAGER_IMPORT=1` does not help — the failure is in `attach_stub`, which raises before that flag is consulted. **Don't spend more time patching this**; the fix is to run the analyzer somewhere that lets you pick a Python version and control the bundle. Everything else on Vercel works.
-- **`next dev` does not serve `api/analyze.py`.** Root-level Python functions only run under `vercel dev` or a real deployment. Use `pnpm dev:full` when working on the audio path. `app/add/page.tsx` checks the response content-type so this surfaces as a clear message rather than a JSON parse error.
-- **The model load is expensive.** `get_analyzer()` caches it in a module global so warm invocations reuse it. Keep it that way.
+Next.js 15 (App Router) on Vercel, Supabase for Postgres and audio storage. No Python, no second service, no model.
 
 ## Data
 
-Two tables, one view — `supabase/migrations/`. Already applied to the live project (`lucys-birds`, ref `elmxrscgpdtiqgpltchm`, in the `hi-whalefyi's projects` org). Never edit an applied migration; add a new one and `supabase db push`.
+`supabase/migrations/`, already applied to project `lucys-birds` (ref `elmxrscgpdtiqgpltchm`, `hi-whalefyi's projects` org). Never edit an applied migration; add a new one and `supabase db push`.
 
-- `recordings` — what Lucy uploaded. **Kept forever.** The original audio outliving the model's opinion of it is the point of the project, not an optimisation.
-- `sightings` — a bird on her list. `source` is `'heard'` (BirdNET found it in a recording) or `'spotted'` (Lucy added it herself). A check constraint keeps the two shapes honest: heard rows must carry a recording and a confidence, spotted rows must carry neither.
-- `life_list` view — one row per species, hiding anything Lucy has rejected.
+- `birds` — one row per species, `sci_name` unique. Adding a bird twice is an upsert, not an error: she may be coming back to attach a song.
+- `bird_recordings` — audio, several allowed per bird, one `is_primary`. A partial unique index enforces the "one primary" rule so no code path can break it.
+- `collection` view — what the page reads.
 
-**One list, not two.** A bird she saw and a bird the model heard are the same kind of record. Don't split them — two tables would mean two collages and no single answer to "how many birds does Lucy have?"
+**The recordings bucket is public.** Deliberate: visitors must be able to press play without a signed-URL round trip. Don't put anything in it that isn't meant to be heard by whoever has the link.
 
-`confirmed` is her call on a machine guess: `true` yes, `false` no, `null` untouched.
+## The gate
 
-`MIN_CONFIDENCE` is 0.15 — deliberately lower than a Pi-in-a-window would use. A phone in wind is noisy, and a maybe Lucy can reject beats a real bird silently dropped.
+Reading is public. Adding needs the passcode (`GATE_PASSCODE`).
 
-## Species list
+`GATE_LINK_KEY` is a **separate long random value** for Lucy's bookmarked link, not the passcode. The link key skips the unlock form and its rate limiting, so it has to be long enough that guessing is hopeless. It's only honoured on page requests, never on APIs — a credential in an API query string lands in logs on every call. See `lib/gate.ts`.
 
-`data/species.json` is generated by `scripts/build-species.mjs` from `model/l18n/labels_en.json` plus whatever illustrations exist. 7,058 species, 329 with artwork, illustrated ones sorted first so the picker floats birds that'll actually look like something.
-
-Searched server-side (`app/api/species/route.ts`) rather than shipped to the phone — it's 480 KB, and Lucy is likely outdoors on mobile data.
+Unlock attempts are rate-limited in Postgres (`unlock_is_blocked`), not in memory — serverless runs many instances and each would hold its own counter.
 
 ## Illustrations
 
-`avian/assets/illustrations/` is 490 MB of print-resolution PNGs and is **not** what gets served. `pnpm illustrations` builds web-sized copies into `public/illustrations/` (gitignored).
+`avian/assets/illustrations/` is 490 MB of print-resolution source and is **not** served. `pnpm illustrations` builds web-sized copies into `public/illustrations/`, which **is committed** — generating at build time made `vercel deploy` push 534 MB and fail.
 
-Filename convention is the scientific name in kebab-case: `Cyanocitta cristata` → `cyanocitta-cristata.png`. A `-2` suffix is the flight pose. `app/page.tsx` has the `slug()` helper.
+`.vercelignore` keeps `avian/` out of deploys entirely.
 
-Only 333 species have art. Anything BirdNET identifies outside that set has no picture — needs a fallback, and `avian/scripts/` is the Gemini pipeline for generating more in the same style.
+Filenames are the scientific name in kebab-case: `Cyanocitta cristata` → `cyanocitta-cristata.png`. A `-2` suffix is the flight pose.
+
+Only 329 of 7,058 species have art. `app/collection.tsx` checks `data/species.json` up front and draws a feather rather than letting the browser show a broken image.
+
+## Species list
+
+`data/species.json` is generated by `scripts/build-species.mjs`. Searched server-side — it's 480 KB and Lucy is on a phone.
+
+## Gotchas already paid for
+
+- **`public/` is not in a serverless function's file bundle.** The share card reads illustrations over HTTP, not from disk. Reading from disk silently returns nothing.
+- **The share card is `force-dynamic`.** Static would freeze the count at deploy time. Vercel caches the rendered image, so bust the URL when testing.
+- **Folders starting with `_` are excluded from Next routing.** Don't name a route directory that way.
+- **`vercel env add` via a heredoc appends a newline** and the value won't match. Use `printf '%s' "$VAL" | vercel env add`.
 
 ## Licence
 
-CC-BY-NC-SA-4.0. **Non-commercial only.** Attribution to BirdNET-Pi and AvianVisitors must stay in `README.md`. Don't strip `README.upstream.md` or `LICENSE`.
+CC-BY-NC-SA-4.0. **Non-commercial only.** Attribution to BirdNET-Pi and AvianVisitors stays in `README.md`. Don't strip `README.upstream.md` or `LICENSE`.
