@@ -25,13 +25,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // An iOS Shortcut has no cookie and no browser to run the unlock page in, so
+  // it presents the key as a header instead. A header is the right place for
+  // it: unlike a query string it isn't written to access logs or browser
+  // history, and it never appears in a shared URL.
+  const headerKey = request.headers.get("x-lb-key");
+  if (headerKey && isValidLinkKey(headerKey)) {
+    return NextResponse.next();
+  }
+
   // Lucy's own link carries a long random key, so she never types anything: she
   // bookmarks /add?key=... once and it unlocks on arrival. Anyone else who
   // lands on /add cold still gets the gate.
   //
-  // Only on page requests. Honouring it on the APIs would turn every write
-  // endpoint into one that accepts a credential in the query string, where it
-  // lands in logs on every single call rather than once per bookmark.
+  // Only on page requests. Honouring it in the query string on APIs would put a
+  // credential in the URL of every write call, where it lands in logs, rather
+  // than once per bookmark.
   const key = request.nextUrl.searchParams.get("key");
   if (key && !request.nextUrl.pathname.startsWith("/api/") && isValidLinkKey(key)) {
     const clean = request.nextUrl.clone();
