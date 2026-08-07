@@ -1,94 +1,74 @@
 # Status — Lucy's Birds
 
-Last updated: 2026-08-05
+Last updated: 2026-08-07
 
 ## Where things stand
 
-**Live and working: https://lucys-birds.vercel.app**
+**Live: https://lucys-birds.vercel.app** — public collection, passcode-gated adding.
 
-A public showcase of Lucy's bird collection with playable songs. Everything in the current scope is built, deployed and verified in production.
+Loaded with Lucy's **real** collection: 71 species imported from her eBird export, with her own first-seen dates and locations.
 
-Branch: `feat/upload-first-rebuild`. **Not merged** — still needs a PR.
+- Branch: `feat/upload-first-rebuild` — **pushed**, 28 commits, **not merged, no PR opened**
+- Latest commit: `9dfd36b feat: let an iOS Shortcut authenticate with a header`
 
 ## What it does
 
-- Public collection page — full width, illustrated, fluid from phone to desktop
-- **A page per bird**: large illustration with a perched / in-flight toggle, a
-  Wikipedia summary, genus, links out to Wikipedia and eBird, and every
-  recording with playback
-- Add a bird: type-ahead over 7,058 species, each result showing its
-  illustration, plus optional audio in the same step
-- Passcode to add, nothing to read. Six digits, numeric, centred, self-submitting
-- Lucy's bookmarked link unlocks her without typing
-- Share card showing her real birds and count, so the link previews properly
-- Installs to a homescreen
-- Pinterest's hover-to-save overlay suppressed site-wide
+**Three views**, switched by a pill control, remembered in localStorage:
+- **Grid** — illustrated cards, two-up on a phone
+- **Collage** — the original project's silhouette-packed cluster (see below)
+- **Map** — Leaflet + OpenStreetMap, pins are the illustrations, nearby birds cluster
+
+**Detail tray** slides in from the right at 50% width, full height. Prev/next paging (wraps), close, Escape and arrow keys. Mirrors to `?bird=slug` via pushState so deep links and the back button work. `/bird/[sci]` also exists as a standalone shareable page.
+
+Each bird shows a perched / in-flight toggle, a Wikipedia summary, genus, links to Wikipedia and eBird, and its recordings with playback.
+
+**Adding** — type-ahead over 7,058 species with illustrations beside each name, optional audio, optional location (phone GPS or a typed place name).
+
+**Sharing from Merlin** — `POST /api/share` takes a `merlinbirds.org/species/<code>` link (or any text containing one) and adds the bird. Authenticates by cookie or an `x-lb-key` header.
+
+Plus: share card showing her real birds and count, homescreen manifest, Lucy's keyed link that unlocks without typing, six-digit numeric passcode screen.
+
+## Verified in production this session
+
+- Collection page public (200); `/add` gated (307 to `/unlock`)
+- 71 species, **71 with locations**, 0 with songs
+- Merlin share endpoint: both example links resolve and add; text-with-link works; no-link returns a clear 400
+- Header auth: correct key 200, wrong key 401
+- Collage, map clustering, and the tray all checked visually at 1440px
+
+## Not verified / known gaps
+
+- **No audio anywhere.** The demo recording was removed during the real import, so playback is currently untested against real data. The code path was verified earlier with a test file.
+- **`/api/birds` no longer exists** (404). Nothing calls it; the rewrite replaced it. `README.md` may still mention it.
+- **The iOS Shortcut has not been built or tested on a real phone.** Steps were given; nobody has run them.
+- **Nothing checked below 1440px this session.** The layout is fluid and was verified at 375/768/1440 in an earlier session, but the tray, collage and map have not been re-checked on a phone.
 
 ## Design
 
-Tokens taken from the original AvianVisitors stylesheet so it reads as the same
-object: near-white paper (`#fcfcfb`), serif display with an italic eyebrow,
-monospace labels with wide letterspacing, and the original's three depth recipes
-(`--edge`, `--recess`, `--raised`) instead of flat borders. Full width with a
-56px gutter that shrinks fluidly.
+Tokens taken from the original AvianVisitors stylesheet: near-white paper (`#fcfcfb`), serif display with an italic eyebrow, monospace labels, and the original's three depth recipes (`--edge`, `--recess`, `--raised`). Full width with a 56px gutter that shrinks fluidly.
 
-## Verified in production
-
-- Added a bird with a song end to end; it appears and plays
-- Audio streams publicly with no auth — a visitor can hear it
-- Share card renders with real illustrations (253 KB PNG)
-- Valid link key unlocks and strips itself from the URL; the old passcode no longer works as a key; a cold visit still gets the gate; the key is refused on APIs
-- Collection page is public
-
-## Contents right now
-
-26 birds. **25 are placeholder** — common North American species I seeded so the page wasn't empty. One is a Eurasian Magpie carrying a real 30-second recording, which is what demonstrates playback.
-
-Clear them whenever Lucy wants to start properly:
-
-```sql
-delete from bird_recordings; delete from birds;
-```
-
-## Views
-
-Grid, collage, and map — switched by the original's recessed pill control, and
-remembered in localStorage.
-
-The **collage** is the overlapping, size-varied arrangement the original is
-built around. Positions are computed from the container width using each
-illustration's real aspect ratio (carried in `data/species.json`, from the
-original's `dims.json`); scale comes from a hash of the species name so it
-varies but stays stable across renders. Smaller birds sit in front.
-
-The **map has no data.** Nothing captures a location, so it says so rather than
-pretending. See below.
-
-## Still missing from the original
-
-- **Mask-based packing.** The original uses per-species silhouette masks
-  (`masks.json`, 795 KB) to interlock birds precisely. Ours overlaps by
-  computed offset — good, but not the real packing.
-- **Dark theme.** The original is fully variable-driven and flips cleanly.
-- **Spectrograms** on recordings.
-
-## Next up
-
-- **Merge the branch.** Everything is on `feat/upload-first-rebuild`.
-- **A real name**, and a domain if it should live under whale.fyi.
-- **Import from eBird.** *Download My Data* gives a CSV of everything she's ever logged — her collection could start full instead of empty. Genuinely easy and probably the highest-value next thing.
-- **Generate missing illustrations.** Only 329 of 7,058 species have art. `avian/scripts/` is the Gemini pipeline that makes more in the same style; worth running for whatever she actually collects.
-- **Locations, for the map view.** Needs a `lat`/`lon` on `birds` and a way to
-  capture it when adding — either the phone's location at the time, or a place
-  picker. Until then the map tab is an empty state.
-- **Editing.** No way to remove a bird, replace a song, or fix a mistake except in SQL.
-- **Repo size.** `.git` is ~624 MB, mostly dead Pi-era history. Reclaimable, not urgent.
+**The collage is a real port**, not an approximation — per-species 1-bit silhouette masks (`public/collage-masks.json`) drive an occupancy grid, so birds nest into each other's concavities. The largest bird anchors the centre and each next one spirals outward in elliptical rings, stopping at the first ring with a free spot and picking the position nearest the centre of mass of what's placed. Total area is budgeted against the canvas and the cluster shrinks until it packs. Sizes are random per mount, so a refresh rearranges it. 15% of birds show their flight pose. See `lib/collage-pack.ts`.
 
 ## Decisions worth remembering
 
-- **No identification here, ever.** Merlin and eBird do it better. BirdNET was tried on Vercel and failed twice (no `tflite-runtime` build for Vercel's Python versions; then TensorFlow broke on Vercel's bytecode compilation). Recorded in git history — don't relitigate.
-- **Collection, not log.** One row per bird. Dates order things and stay out of the UI.
-- **Audio uploads as recorded.** Converting made it bigger for no gain.
-- **Public audio bucket** so visitors can press play with no round trip.
-- **Link key ≠ passcode.** The link skips rate limiting, so it's long and random and separately rotatable.
-- **Supabase costs $10/month** — the `hi-whalefyi's projects` org is Pro and this is its fourth project. Accepted deliberately.
+- **No bird identification here, ever.** Lucy uses Merlin and eBird. BirdNET was tried on Vercel and failed twice — no `tflite-runtime` build for Vercel's Python versions, then TensorFlow broke on Vercel's bytecode compilation stripping librosa's stubs. In git history. Don't relitigate.
+- **Coordinates are fuzzed to a 0.1° grid** (~4.3 miles max). Her export has metre-accurate coordinates for "Mimi's House" and "Neighborhood"; this page is public and carries her name. See `CLAUDE.md`.
+- **Illustrations render as CSS backgrounds, never `<img>`.** That's what actually stops Pinterest's extension — it needs a real image element. `app/bird-art.tsx`.
+- **Species names come from our own list**, never from a request body — anything stored is rendered publicly.
+- **Collection, not log.** One row per bird.
+- **Supabase costs $10/month** — 4th project in a Pro org. Accepted deliberately.
+
+## Next likely work
+
+1. **Open a PR and merge.** 28 commits sitting on a branch.
+2. **Build the iOS Shortcut on Lucy's phone** — the endpoint is live and tested, nothing else needed, no accounts. Steps are in `HANDOFF.md`.
+3. **Get a real song onto a bird** so playback is proven with real data.
+4. **Inbound email** (optional) — Postmark's free tier gives an inbound address with no domain; save it as a contact called "Birds" on her phone so the address never needs typing. Needs a two-minute browser signup that can't be done from the CLI. Its real advantage over the Shortcut is audio attachments.
+5. **Generate missing illustrations** — 9 of her 71 species have none. `avian/scripts/` is the Gemini pipeline that makes more in the same style.
+6. **A real name**, and a domain if it should live under whale.fyi.
+
+## Open questions
+
+- Merge to `main`, or keep iterating on the branch?
+- Is `place` safe to display publicly? Names like "Mimi's House" are stored and shown. Coordinates are fuzzed; the labels are not.
+- Editing: no way to remove a bird, replace a song or fix a mistake except in SQL.

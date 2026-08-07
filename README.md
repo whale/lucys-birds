@@ -33,7 +33,10 @@ There is no bird identification in this app, on purpose. That problem is solved 
 | Piece | What it does | File |
 |---|---|---|
 | The collection | The public page | `app/page.tsx` |
-| Playback | Tap a bird, hear it | `app/collection.tsx` |
+| Views + tray | Grid, collage, map; the detail tray | `app/gallery.tsx` |
+| Collage packing | Silhouette-aware layout | `lib/collage-pack.ts` |
+| Map | Pins and clustering | `app/map.tsx` |
+| Share from Merlin | Turns a Merlin link into a bird | `app/api/share/route.ts` |
 | Add a bird | Search, pick, optional song | `app/add/page.tsx` |
 | Species search | Type-ahead over 7,058 species | `app/api/species/route.ts` |
 | Saving | Bird, then its song | `app/api/add/` |
