@@ -70,6 +70,7 @@ next-env.d.ts
 .env.local
 .env*.local
 .vercel
+.playwright-cli/
 .db-password.txt
 
 

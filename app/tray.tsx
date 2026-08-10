@@ -249,20 +249,21 @@ export function Tray({
                   disabled={!bird.flight}
                 >
                   {bird.art ? (
-                    <BirdArt
-                      key={showFlight ? "flight" : "perched"}
-                      src={showFlight
-                        ? bird.flightArtUrl ?? flightSrc(bird.sciName)
-                        : bird.artUrl ?? perchedSrc(bird.sciName)}
-                      label={`${bird.comName}, ${showFlight ? "in flight" : "perched"}`}
-                      style={{
-                        width: "88%",
-                        height: "88%",
-                        display: "block",
-                        backgroundPosition: "center center",
-                        transform: `translate(${artShiftX}%, ${artShiftY}%)`,
-                      }}
-                    />
+                    <span className="tray-pose-layer" key={showFlight ? "flight" : "perched"}>
+                      <BirdArt
+                        src={showFlight
+                          ? bird.flightArtUrl ?? flightSrc(bird.sciName)
+                          : bird.artUrl ?? perchedSrc(bird.sciName)}
+                        label={`${bird.comName}, ${showFlight ? "in flight" : "perched"}`}
+                        style={{
+                          width: "88%",
+                          height: "88%",
+                          display: "block",
+                          backgroundPosition: "center center",
+                          transform: `translate(${artShiftX}%, ${artShiftY}%)`,
+                        }}
+                      />
+                    </span>
                   ) : (
                     <span className="portrait-empty" style={{ fontSize: "3rem", maxWidth: "8rem" }}><Feather aria-hidden="true" size={36} strokeWidth={1.25} /></span>
                   )}

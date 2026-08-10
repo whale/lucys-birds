@@ -135,7 +135,16 @@
 
 /* ----------------------------------------------------------- drawer frame */
 .study-frame .tray-body,
-.study-frame .tray-bar { animation: none !important; opacity: 1 !important; transform: none !important; }
+.study-frame .tray-bar,
+.study-frame .tray-figure,
+.study-frame .tray-name,
+.study-frame .stat-row,
+.study-frame .desc,
+.study-frame .desc-source,
+.study-frame .spot-map,
+.study-frame .recordings,
+.study-frame .actions,
+.study-frame .catalogue-actions { animation: none !important; opacity: 1 !important; transform: none !important; }
 .study-frame .tray-scrim { transition: opacity 150ms linear; }
 .study-frame.frame-spring .tray { transition: transform 560ms linear(0, .18, .49, .76, .93, 1.018, 1.012, 1); }
 .study-frame.frame-spring .tray:not(.is-open) { transition: transform 210ms cubic-bezier(.4, 0, 1, 1); }
