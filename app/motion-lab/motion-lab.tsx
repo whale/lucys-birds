@@ -19,12 +19,21 @@ const studies = {
     ],
   },
   drawer: {
-    label: "Bird drawer",
+    label: "Drawer contents",
     options: [
-      { id: "fieldguide", label: "01 Field guide", note: "Recommended · interruptible sheet spring, then content assembles in reading order" },
-      { id: "direct", label: "02 Direct", note: "Fast spatial spring with a shorter, asymmetric close" },
-      { id: "paper", label: "03 Paper edge", note: "A constant-speed leading rule draws the clipped sheet into place" },
-      { id: "specimen", label: "04 Specimen first", note: "The illustration establishes focus before facts and prose arrive" },
+      { id: "specimen", label: "01 Specimen first", note: "Selected · the illustration establishes focus before facts and prose arrive" },
+      { id: "reading", label: "02 Reading order", note: "Illustration, title, facts, prose, map, and recordings assemble in sequence" },
+      { id: "grouped", label: "03 Two groups", note: "Image and title arrive together, followed by all supporting information" },
+      { id: "whole", label: "04 Whole page", note: "The complete record fades as one quiet, stable composition" },
+    ],
+  },
+  frame: {
+    label: "Drawer frame",
+    options: [
+      { id: "spring", label: "01 Sheet spring", note: "Recommended · a low-bounce interruptible spring with a faster close" },
+      { id: "glide", label: "02 Editorial glide", note: "No overshoot; the sheet decelerates firmly into its border" },
+      { id: "rule", label: "03 Leading rule", note: "A constant-speed vertical rule draws the clipped frame into view" },
+      { id: "compress", label: "04 Spatial focus", note: "The frame resolves from a compressed right edge rather than travelling across the page" },
     ],
   },
   pose: {
@@ -85,7 +94,7 @@ function PoseReview({ bird, option }: { bird: GalleryBird; option: string }) {
 
 export function MotionLab({ birds }: { birds: GalleryBird[] }) {
   const [scope, setScope] = useState<Scope>("drawer");
-  const [choices, setChoices] = useState<Record<Scope, string>>({ load: "assembly", drawer: "fieldguide", pose: "register", map: "plot" });
+  const [choices, setChoices] = useState<Record<Scope, string>>({ load: "assembly", drawer: "specimen", frame: "spring", pose: "register", map: "plot" });
   const [replay, setReplay] = useState(0);
   const active = studies[scope].options.find((item) => item.id === choices[scope]) ?? studies[scope].options[0];
   const poseBird = useMemo(() => birds.find((bird) => bird.flight && bird.art) ?? birds[0], [birds]);
@@ -93,22 +102,22 @@ export function MotionLab({ birds }: { birds: GalleryBird[] }) {
   function changeScope(next: Scope) {
     setScope(next);
     setReplay((value) => value + 1);
-    window.history.replaceState({}, "", next === "drawer" ? `?bird=${slug(poseBird.sciName)}` : window.location.pathname);
+    window.history.replaceState({}, "", next === "drawer" || next === "frame" ? `?bird=${slug(poseBird.sciName)}` : window.location.pathname);
   }
 
   function choose(id: string) {
     setChoices((current) => ({ ...current, [scope]: id }));
-    window.history.replaceState({}, "", scope === "drawer" ? `?bird=${slug(poseBird.sciName)}` : window.location.pathname);
+    window.history.replaceState({}, "", scope === "drawer" || scope === "frame" ? `?bird=${slug(poseBird.sciName)}` : window.location.pathname);
     setReplay((value) => value + 1);
   }
 
   function replayStudy() {
-    window.history.replaceState({}, "", scope === "drawer" ? `?bird=${slug(poseBird.sciName)}` : window.location.pathname);
+    window.history.replaceState({}, "", scope === "drawer" || scope === "frame" ? `?bird=${slug(poseBird.sciName)}` : window.location.pathname);
     setReplay((value) => value + 1);
   }
 
   return (
-    <div className={`motion-study study-${scope} load-${choices.load} drawer-${choices.drawer} map-${choices.map}`}>
+    <div className={`motion-study study-${scope} load-${choices.load} drawer-${choices.drawer} frame-${choices.frame} map-${choices.map}`}>
       <div className="motion-review-bar">
         <div className="motion-scope" role="tablist" aria-label="Animation part">
           {(Object.keys(studies) as Scope[]).map((key) => (
@@ -124,8 +133,8 @@ export function MotionLab({ birds }: { birds: GalleryBird[] }) {
           <span>{active.note}</span>
         </div>
         <button className="motion-replay" type="button" onClick={replayStudy}>
-          {scope === "drawer" ? <ExternalLink aria-hidden="true" size={13} strokeWidth={1.5} /> : <RotateCcw aria-hidden="true" size={13} strokeWidth={1.5} />}
-          {scope === "drawer" ? "Open example" : "Replay"}
+          {scope === "drawer" || scope === "frame" ? <ExternalLink aria-hidden="true" size={13} strokeWidth={1.5} /> : <RotateCcw aria-hidden="true" size={13} strokeWidth={1.5} />}
+          {scope === "drawer" || scope === "frame" ? "Open example" : "Replay"}
         </button>
       </div>
 

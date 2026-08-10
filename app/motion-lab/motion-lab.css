@@ -101,44 +101,26 @@
 .study-load.load-index .flock .portrait { opacity: 0; clip-path: inset(100% 0 0 0); animation: index-portrait 360ms var(--motion-ease) 110ms forwards; }
 .study-load.load-index .flock .bird:nth-child(2n) .portrait { animation-delay: 155ms; }
 
-/* DRAWER 01: the most direct spatial model. CSS transitions allow an opening
-   drawer to reverse smoothly if Close is clicked before it finishes. */
-.study-drawer.drawer-direct .tray { transition: transform 250ms var(--motion-drawer); }
-.study-drawer.drawer-direct .tray:not(.is-open) { transition-duration: 185ms; }
-.study-drawer.drawer-direct .tray.is-open .tray-body { opacity: 0; transform: translateX(9px); animation: direct-content 190ms var(--motion-ease) 55ms forwards; }
-
-/* DRAWER 01: a low-bounce sampled spring makes the sheet physical without
-   feeling playful. Atmospheric opacity remains linear and finishes first. */
-.study-drawer.drawer-fieldguide .tray {
-  transition: transform 560ms linear(0, .18, .49, .76, .93, 1.018, 1.012, 1);
-}
-.study-drawer.drawer-fieldguide .tray:not(.is-open) { transition: transform 210ms cubic-bezier(.4, 0, 1, 1); }
-.study-drawer.drawer-fieldguide .tray-scrim { transition: opacity 160ms linear; }
-.study-drawer.drawer-fieldguide .tray.is-open .tray-bar { opacity: 0; animation: simple-opacity 150ms linear 50ms forwards; }
-.study-drawer.drawer-fieldguide .tray.is-open .tray-figure { opacity: 0; transform: scale(.985); animation: fieldguide-art 360ms linear(0, .35, .73, .96, 1.015, 1) 70ms forwards; }
-.study-drawer.drawer-fieldguide .tray.is-open .tray-name,
-.study-drawer.drawer-fieldguide .tray.is-open .stat-row { opacity: 0; transform: translateY(6px); animation: content-y 210ms var(--motion-ease) 125ms forwards; }
-.study-drawer.drawer-fieldguide .tray.is-open .desc,
-.study-drawer.drawer-fieldguide .tray.is-open .desc-source,
-.study-drawer.drawer-fieldguide .tray.is-open .spot-map,
-.study-drawer.drawer-fieldguide .tray.is-open .recordings,
-.study-drawer.drawer-fieldguide .tray.is-open .actions,
-.study-drawer.drawer-fieldguide .tray.is-open .catalogue-actions { opacity: 0; transform: translateY(6px); animation: content-y 210ms var(--motion-ease) 170ms forwards; }
-
-/* DRAWER 02: a linear leading rule gives the reveal a physical paper edge.
-   The sheet itself uses a clipped reveal with no scaling. */
-.study-drawer.drawer-paper .tray { transform: translateX(0); clip-path: inset(0 0 0 100%); pointer-events: none; transition: clip-path 300ms linear; }
-.study-drawer.drawer-paper .tray.is-open { clip-path: inset(0 0 0 0); pointer-events: auto; }
-.study-drawer.drawer-paper .tray::before { content: ""; position: absolute; z-index: 5; top: 0; bottom: 0; left: 0; width: 1px; background: var(--ink-soft); opacity: 0; }
-.study-drawer.drawer-paper .tray.is-open::before { opacity: 1; animation: paper-edge 300ms linear forwards; }
-.study-drawer.drawer-paper .tray.is-open .tray-body { opacity: 0; animation: simple-opacity 150ms ease 105ms forwards; }
-
-/* DRAWER 03: a small blur bridges two visually dense states. It stays under
-   4px and disappears early to keep Safari paint work bounded. */
-.study-drawer.drawer-focus .tray { opacity: 0; filter: blur(4px); transform: scale(.985); transform-origin: right center; pointer-events: none; transition: opacity 170ms ease, transform 230ms var(--motion-ease), filter 170ms ease; }
-.study-drawer.drawer-focus .tray.is-open { opacity: 1; filter: blur(0); transform: scale(1); pointer-events: auto; }
-.study-drawer.drawer-focus .tray:not(.is-open) { transition-duration: 130ms, 170ms, 120ms; }
-.study-drawer.drawer-focus .tray.is-open .tray-figure { opacity: 0; filter: blur(2px); animation: focus-detail 210ms ease 50ms forwards; }
+/* Drawer-content studies intentionally share the same neutral frame motion.
+   This keeps the review focused on the sequence inside the sheet. */
+.study-drawer .tray { transition: transform 250ms cubic-bezier(.32, .72, 0, 1); }
+.study-drawer.drawer-reading .tray.is-open .tray-bar { opacity: 0; animation: simple-opacity 150ms linear 35ms forwards; }
+.study-drawer.drawer-reading .tray.is-open .tray-figure { opacity: 0; transform: scale(.985); animation: fieldguide-art 300ms var(--motion-ease) 65ms forwards; }
+.study-drawer.drawer-reading .tray.is-open .tray-name { opacity: 0; transform: translateY(6px); animation: content-y 190ms var(--motion-ease) 115ms forwards; }
+.study-drawer.drawer-reading .tray.is-open .stat-row { opacity: 0; transform: translateY(6px); animation: content-y 190ms var(--motion-ease) 150ms forwards; }
+.study-drawer.drawer-reading .tray.is-open .desc,
+.study-drawer.drawer-reading .tray.is-open .desc-source,
+.study-drawer.drawer-reading .tray.is-open .spot-map,
+.study-drawer.drawer-reading .tray.is-open .recordings { opacity: 0; transform: translateY(6px); animation: content-y 190ms var(--motion-ease) 190ms forwards; }
+.study-drawer.drawer-grouped .tray.is-open .tray-figure,
+.study-drawer.drawer-grouped .tray.is-open .tray-name { opacity: 0; transform: translateY(7px); animation: content-y 220ms var(--motion-ease) 60ms forwards; }
+.study-drawer.drawer-grouped .tray.is-open .stat-row,
+.study-drawer.drawer-grouped .tray.is-open .desc,
+.study-drawer.drawer-grouped .tray.is-open .desc-source,
+.study-drawer.drawer-grouped .tray.is-open .spot-map,
+.study-drawer.drawer-grouped .tray.is-open .recordings,
+.study-drawer.drawer-grouped .tray.is-open .actions { opacity: 0; animation: simple-opacity 190ms linear 170ms forwards; }
+.study-drawer.drawer-whole .tray.is-open .tray-body { opacity: 0; animation: simple-opacity 220ms linear 70ms forwards; }
 
 /* DRAWER 04: the illustration is the hero moment. Controls, naming, facts,
    prose, map, and recordings then assemble in reading order. */
@@ -150,6 +132,22 @@
 .study-drawer.drawer-specimen .tray.is-open .stat-row { opacity: 0; transform: translateY(8px); animation: content-y 210ms var(--motion-ease) 140ms forwards; }
 .study-drawer.drawer-specimen .tray.is-open .desc, .study-drawer.drawer-specimen .tray.is-open .desc-source { opacity: 0; transform: translateY(8px); animation: content-y 210ms var(--motion-ease) 170ms forwards; }
 .study-drawer.drawer-specimen .tray.is-open .spot-map, .study-drawer.drawer-specimen .tray.is-open .recordings { opacity: 0; transform: translateY(8px); animation: content-y 210ms var(--motion-ease) 200ms forwards; }
+
+/* ----------------------------------------------------------- drawer frame */
+.study-frame .tray-body,
+.study-frame .tray-bar { animation: none !important; opacity: 1 !important; transform: none !important; }
+.study-frame .tray-scrim { transition: opacity 150ms linear; }
+.study-frame.frame-spring .tray { transition: transform 560ms linear(0, .18, .49, .76, .93, 1.018, 1.012, 1); }
+.study-frame.frame-spring .tray:not(.is-open) { transition: transform 210ms cubic-bezier(.4, 0, 1, 1); }
+.study-frame.frame-glide .tray { transition: transform 320ms cubic-bezier(.22, .8, .24, 1); }
+.study-frame.frame-glide .tray:not(.is-open) { transition-duration: 220ms; transition-timing-function: cubic-bezier(.4, 0, 1, 1); }
+.study-frame.frame-rule .tray { transform: translateX(0); clip-path: inset(0 0 0 100%); pointer-events: none; transition: clip-path 330ms linear; }
+.study-frame.frame-rule .tray.is-open { clip-path: inset(0 0 0 0); pointer-events: auto; }
+.study-frame.frame-rule .tray::before { content: ""; position: absolute; z-index: 5; top: 0; bottom: 0; left: 0; width: 1px; background: var(--ink-soft); opacity: 0; }
+.study-frame.frame-rule .tray.is-open::before { opacity: 1; animation: paper-edge 330ms linear forwards; }
+.study-frame.frame-compress .tray { opacity: 0; transform: scaleX(.94); transform-origin: right center; pointer-events: none; transition: opacity 160ms linear, transform 300ms cubic-bezier(.22, 1, .36, 1); }
+.study-frame.frame-compress .tray.is-open { opacity: 1; transform: scaleX(1); pointer-events: auto; }
+.study-frame.frame-compress .tray:not(.is-open) { transition-duration: 120ms, 190ms; }
 
 @keyframes field-scan { 0% { transform: translateY(0); opacity: 0; } 8% { opacity: .45; } 92% { opacity: .45; } 100% { transform: translateY(calc(100vh - 69px)); opacity: 0; } }
 @keyframes scan-uncover { to { opacity: 1; clip-path: inset(0 0 0 0); } }
