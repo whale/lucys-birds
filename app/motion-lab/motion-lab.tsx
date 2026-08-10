@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ExternalLink, RotateCcw } from "lucide-react";
 import { Gallery, type GalleryBird } from "../gallery";
@@ -96,8 +96,26 @@ export function MotionLab({ birds }: { birds: GalleryBird[] }) {
   const [scope, setScope] = useState<Scope>("drawer");
   const [choices, setChoices] = useState<Record<Scope, string>>({ load: "assembly", drawer: "specimen", frame: "spring", pose: "register", map: "plot" });
   const [replay, setReplay] = useState(0);
+  const openTimer = useRef<number | null>(null);
   const active = studies[scope].options.find((item) => item.id === choices[scope]) ?? studies[scope].options[0];
   const poseBird = useMemo(() => birds.find((bird) => bird.flight && bird.art) ?? birds[0], [birds]);
+
+  useEffect(() => () => {
+    if (openTimer.current) window.clearTimeout(openTimer.current);
+  }, []);
+
+  function openFreshDrawer() {
+    if (openTimer.current) window.clearTimeout(openTimer.current);
+    // First mount an explicitly closed gallery. Only after the old panel has
+    // cleared do we add the deep link and mount the example that opens.
+    window.history.replaceState({}, "", window.location.pathname);
+    setReplay((value) => value + 1);
+    openTimer.current = window.setTimeout(() => {
+      window.history.replaceState({}, "", `?bird=${slug(poseBird.sciName)}`);
+      setReplay((value) => value + 1);
+      openTimer.current = null;
+    }, 280);
+  }
 
   function changeScope(next: Scope) {
     setScope(next);
@@ -107,13 +125,19 @@ export function MotionLab({ birds }: { birds: GalleryBird[] }) {
 
   function choose(id: string) {
     setChoices((current) => ({ ...current, [scope]: id }));
-    window.history.replaceState({}, "", scope === "drawer" || scope === "frame" ? `?bird=${slug(poseBird.sciName)}` : window.location.pathname);
-    setReplay((value) => value + 1);
+    if (scope === "drawer" || scope === "frame") openFreshDrawer();
+    else {
+      window.history.replaceState({}, "", window.location.pathname);
+      setReplay((value) => value + 1);
+    }
   }
 
   function replayStudy() {
-    window.history.replaceState({}, "", scope === "drawer" || scope === "frame" ? `?bird=${slug(poseBird.sciName)}` : window.location.pathname);
-    setReplay((value) => value + 1);
+    if (scope === "drawer" || scope === "frame") openFreshDrawer();
+    else {
+      window.history.replaceState({}, "", window.location.pathname);
+      setReplay((value) => value + 1);
+    }
   }
 
   return (
