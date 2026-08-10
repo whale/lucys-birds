@@ -34,6 +34,8 @@ const studies = {
       { id: "glide", label: "02 Editorial glide", note: "No overshoot; the sheet decelerates firmly into its border" },
       { id: "rule", label: "03 Leading rule", note: "A constant-speed vertical rule draws the clipped frame into view" },
       { id: "compress", label: "04 Spatial focus", note: "The frame resolves from a compressed right edge rather than travelling across the page" },
+      { id: "push", label: "05 Push aside", note: "The collection yields space and remains visibly connected beneath the drawer" },
+      { id: "expand", label: "06 Bird expands", note: "Select any bird below; its real grid position becomes the origin of the complete record" },
     ],
   },
   pose: {
@@ -125,7 +127,10 @@ export function MotionLab({ birds }: { birds: GalleryBird[] }) {
 
   function choose(id: string) {
     setChoices((current) => ({ ...current, [scope]: id }));
-    if (scope === "drawer" || scope === "frame") openFreshDrawer();
+    if (scope === "frame" && id === "expand") {
+      window.history.replaceState({}, "", window.location.pathname);
+      setReplay((value) => value + 1);
+    } else if (scope === "drawer" || scope === "frame") openFreshDrawer();
     else {
       window.history.replaceState({}, "", window.location.pathname);
       setReplay((value) => value + 1);
@@ -133,7 +138,10 @@ export function MotionLab({ birds }: { birds: GalleryBird[] }) {
   }
 
   function replayStudy() {
-    if (scope === "drawer" || scope === "frame") openFreshDrawer();
+    if (scope === "frame" && active.id === "expand") {
+      window.history.replaceState({}, "", window.location.pathname);
+      setReplay((value) => value + 1);
+    } else if (scope === "drawer" || scope === "frame") openFreshDrawer();
     else {
       window.history.replaceState({}, "", window.location.pathname);
       setReplay((value) => value + 1);
@@ -158,7 +166,7 @@ export function MotionLab({ birds }: { birds: GalleryBird[] }) {
         </div>
         <button className="motion-replay" type="button" onClick={replayStudy}>
           {scope === "drawer" || scope === "frame" ? <ExternalLink aria-hidden="true" size={13} strokeWidth={1.5} /> : <RotateCcw aria-hidden="true" size={13} strokeWidth={1.5} />}
-          {scope === "drawer" || scope === "frame" ? "Open example" : "Replay"}
+          {scope === "frame" && active.id === "expand" ? "Reset example" : scope === "drawer" || scope === "frame" ? "Open example" : "Replay"}
         </button>
       </div>
 

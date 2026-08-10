@@ -71,7 +71,20 @@ export function Gallery({
   }, [visibleBirds]);
 
   const open = useCallback(
-    (index: number) => {
+    (index: number, source?: HTMLElement) => {
+      if (source) {
+        const rect = source.getBoundingClientRect();
+        const trayWidth = Math.min(window.innerWidth * 0.72, 760);
+        const trayLeft = window.innerWidth - trayWidth;
+        document.documentElement.style.setProperty(
+          "--bird-source-x",
+          `${rect.left + rect.width / 2 - (trayLeft + trayWidth / 2)}px`,
+        );
+        document.documentElement.style.setProperty(
+          "--bird-source-y",
+          `${rect.top + rect.height / 2 - window.innerHeight / 2}px`,
+        );
+      }
       setOpenIndex(index);
       // pushState rather than a router push: the page data hasn't changed, and
       // a real navigation would re-fetch the whole collection to show a panel.
@@ -160,7 +173,7 @@ export function Gallery({
               <button
                 type="button"
                 className="bird-link"
-                onClick={() => open(i)}
+                onClick={(event) => open(i, event.currentTarget)}
               >
                 <span className="portrait">
                   {bird.art ? (
