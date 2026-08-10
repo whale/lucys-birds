@@ -50,14 +50,26 @@ export function Collage({
   useEffect(() => {
     const element = container.current;
     if (!element) return;
-    const observer = new ResizeObserver(([entry]) => {
-      // A canvas roughly the shape of the space it sits in, tall enough that
-      // the cluster has somewhere to grow.
-      const w = entry.contentRect.width;
-      setSize({ w, h: Math.max(420, Math.min(900, w * 0.62)) });
-    });
+    const measure = () => {
+      const w = element.getBoundingClientRect().width;
+      const top = element.getBoundingClientRect().top;
+      // Use the actual room below the header. Width-only sizing made the
+      // collage unnecessarily tall on laptop screens and pushed it below the
+      // fold even when plenty of horizontal room was available.
+      const availableHeight = window.innerHeight - top - 24;
+      setSize({
+        w,
+        h: Math.max(320, Math.min(900, w * 0.62, availableHeight)),
+      });
+    };
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
-    return () => observer.disconnect();
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   // A fresh seed per mount, so every refresh rearranges the flock.
@@ -112,8 +124,8 @@ export function Collage({
             <BirdArt
               src={
                 tile.flying
-                  ? flightSrc(tile.bird.sciName)
-                  : perchedSrc(tile.bird.sciName)
+                  ? tile.bird.flightArtUrl ?? flightSrc(tile.bird.sciName)
+                  : tile.bird.artUrl ?? perchedSrc(tile.bird.sciName)
               }
               label={tile.bird.comName}
               style={{ width: "100%", height: "100%", display: "block" }}

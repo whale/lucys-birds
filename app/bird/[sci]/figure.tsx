@@ -19,11 +19,15 @@ export function BirdFigure({
   comName,
   art,
   flight,
+  artUrl,
+  flightArtUrl,
 }: {
   sciName: string;
   comName: string;
   art: boolean;
   flight: boolean;
+  artUrl?: string | null;
+  flightArtUrl?: string | null;
 }) {
   const [flying, setFlying] = useState(false);
 
@@ -43,7 +47,9 @@ export function BirdFigure({
   return (
     <div className="detail-figure">
       <BirdArt
-        src={flying ? flightSrc(sciName) : perchedSrc(sciName)}
+        src={flying
+          ? flightArtUrl ?? flightSrc(sciName)
+          : artUrl ?? perchedSrc(sciName)}
         label={`${comName}, ${flying ? "in flight" : "perched"}`}
         style={{ width: "100%", height: "100%", display: "block" }}
       />

@@ -13,13 +13,15 @@ type Bird = {
   sci_name: string;
   com_name: string;
   added_at: string;
+  art_url: string | null;
+  flight_art_url: string | null;
 };
 
 /** The URL carries the slug, so find the bird by matching it back. */
 async function findBird(sciSlug: string): Promise<Bird | null> {
   const { data, error } = await serviceClient()
     .from("birds")
-    .select("id, sci_name, com_name, added_at");
+    .select("id, sci_name, com_name, added_at, art_url, flight_art_url");
   if (error) {
     console.error("bird lookup failed", error);
     return null;
@@ -133,8 +135,10 @@ export default async function BirdPage({
         <BirdFigure
           sciName={bird.sci_name}
           comName={bird.com_name}
-          art={hasArt(bird.sci_name)}
-          flight={hasFlight(bird.sci_name)}
+          art={hasArt(bird.sci_name) || Boolean(bird.art_url)}
+          flight={hasFlight(bird.sci_name) || Boolean(bird.flight_art_url)}
+          artUrl={bird.art_url}
+          flightArtUrl={bird.flight_art_url}
         />
 
         <div>

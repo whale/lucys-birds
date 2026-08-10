@@ -2,7 +2,7 @@
 
 *A collection of birds Lucy has found, and their songs.*
 
-**Live: https://lucys-birds.vercel.app**
+**Live: https://birds.lesmith.me**
 
 Lucy identifies birds in Merlin and eBird. This isn't for that. It's the place she sends people to see what she's collected — and to hear it. Tap a bird, hear its song.
 
@@ -63,6 +63,24 @@ pnpm dev
 ```
 
 Copy `.env.example` to `.env.local` and fill it in from the Supabase project's API settings.
+
+Shared API keys are kept in `~/.config/secrets.env`, not `~/.env` and never
+in this repository. Load them into a local terminal before starting the app:
+
+```bash
+set -a
+source ~/.config/secrets.env
+set +a
+pnpm dev
+```
+
+`GEMINI_API_KEY` comes from that shared file. Production receives the same
+variable through Vercel's encrypted environment settings; its value must never
+be committed to GitHub.
+
+The global Motion AI Kit is installed for Codex in `~/.codex/skills/motion`.
+Its hosted `motion` and `motion-plus` tools are registered in Codex's global MCP
+configuration. Motion+ requires signing in through its browser authorization.
 
 The database schema lives in `supabase/migrations/` and is already applied. To change it, add a new migration and run `supabase db push` — don't edit an applied one.
 

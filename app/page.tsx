@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { serviceClient } from "@/lib/supabase";
 import { aspectRatio, hasArt, hasFlight } from "@/lib/species";
 import { Gallery, type GalleryBird } from "./gallery";
@@ -28,8 +27,10 @@ export default async function CollectionPage() {
       lat: (bird as { lat?: number | null }).lat ?? null,
       lon: (bird as { lon?: number | null }).lon ?? null,
       place: (bird as { place?: string | null }).place ?? null,
-      art: hasArt(bird.sci_name),
-      flight: hasFlight(bird.sci_name),
+      art: hasArt(bird.sci_name) || Boolean((bird as { art_url?: string | null }).art_url),
+      flight: hasFlight(bird.sci_name) || Boolean((bird as { flight_art_url?: string | null }).flight_art_url),
+      artUrl: (bird as { art_url?: string | null }).art_url ?? null,
+      flightArtUrl: (bird as { flight_art_url?: string | null }).flight_art_url ?? null,
       ar: aspectRatio(bird.sci_name),
     }));
   } catch (cause) {
@@ -39,28 +40,8 @@ export default async function CollectionPage() {
     loadError = "Couldn't load the birds right now. Try again in a moment.";
   }
 
-  const withSongs = birds.filter((b) => b.hasSong).length;
-
   return (
     <main className="page">
-      <header className="masthead">
-        <div>
-          <span className="eyebrow">Lucy&rsquo;s</span>
-          <h1 className="display">BIRD COLLECTION</h1>
-          {birds.length > 0 && (
-            <p className="meta">
-              {birds.length} species
-              {withSongs > 0 && ` · ${withSongs} with songs`}
-            </p>
-          )}
-        </div>
-        <div className="actions">
-          <Link className="chip" href="/add">
-            add a bird
-          </Link>
-        </div>
-      </header>
-
       {loadError && (
         <p className="notice notice-error" style={{ marginTop: "2rem" }}>
           {loadError}
@@ -69,7 +50,7 @@ export default async function CollectionPage() {
 
       {!loadError && birds.length === 0 && (
         <p className="empty">
-          No birds yet. <Link href="/add">Add the first one.</Link>
+          No birds yet.
         </p>
       )}
 

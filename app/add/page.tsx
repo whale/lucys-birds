@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { perchedSrc } from "@/lib/species-paths";
 import { BirdArt } from "../bird-art";
+import { ArrowLeft, Feather, X } from "lucide-react";
 
 type Species = { sci: string; com: string; art: boolean };
 
@@ -21,6 +22,7 @@ export default function AddPage() {
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const searchBox = useRef<HTMLInputElement>(null);
+  const fileBox = useRef<HTMLInputElement>(null);
 
   // Debounced so a fast typist doesn't fire a request per keystroke, and
   // aborted on change so a slow early response can't overwrite newer results.
@@ -76,12 +78,26 @@ export default function AddPage() {
     setLocating(true);
     setError(null);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({
+      async (position) => {
+        const nextCoords = {
           lat: Number(position.coords.latitude.toFixed(5)),
           lon: Number(position.coords.longitude.toFixed(5)),
-        });
-        setLocating(false);
+        };
+        setCoords(nextCoords);
+        setPlace(`${nextCoords.lat}, ${nextCoords.lon}`);
+        try {
+          const response = await fetch(`/api/location?lat=${nextCoords.lat}&lon=${nextCoords.lon}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.label) {
+              setPlace(result.label);
+            }
+          }
+        } catch {
+          // Coordinates are still useful when a nearby place name is unavailable.
+        } finally {
+          setLocating(false);
+        }
       },
       (cause) => {
         // Denied is a choice, not a fault — say so plainly and move on.
@@ -109,6 +125,9 @@ export default function AddPage() {
           sciName: chosen.sci,
           comName: chosen.com,
           withAudio: Boolean(song),
+          lat: coords?.lat,
+          lon: coords?.lon,
+          place,
         }),
       });
       const result = await started.json();
@@ -160,20 +179,19 @@ export default function AddPage() {
   }
 
   return (
-    <main className="page">
+    <main className="page add-page">
       <header className="masthead">
         <div>
-          <span className="eyebrow">Lucy&rsquo;s birds</span>
-          <h1
-            className="display"
-            style={{ fontSize: "clamp(22px, 2.4vw, 32px)" }}
-          >
-            ADD A BIRD
-          </h1>
+          <Link className="eyebrow add-back" href="/">
+            <ArrowLeft aria-hidden="true" size={12} strokeWidth={1.5} />
+            Lucy&rsquo;s Bird Collection
+          </Link>
+          <h1 className="display">Add a bird</h1>
         </div>
         <div className="actions">
           <Link className="chip" href="/">
-            all birds
+            <X aria-hidden="true" size={8} strokeWidth={1.5} />
+            close
           </Link>
         </div>
       </header>
@@ -189,13 +207,13 @@ export default function AddPage() {
         {!chosen ? (
           <>
             <label>
-              Which bird
+              Which bird did you see or hear?
               <input
                 ref={searchBox}
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="blue jay, robin, wren…"
+                placeholder="Blue Jay, Robin, Wren..."
                 autoFocus
               />
             </label>
@@ -225,7 +243,7 @@ export default function AddPage() {
                         />
                       ) : (
                         <span className="picker-thumb-empty" aria-hidden="true">
-                          🪶
+                          <Feather aria-hidden="true" size={18} strokeWidth={1.25} />
                         </span>
                       )}
                     </span>
@@ -245,7 +263,7 @@ export default function AddPage() {
           </>
         ) : (
           <>
-            <div className="rec-row" style={{ gap: 16 }}>
+            <div className="selected-bird">
               <span className="picker-thumb">
                 {chosen.art ? (
                   <BirdArt
@@ -255,11 +273,11 @@ export default function AddPage() {
                   />
                 ) : (
                   <span className="picker-thumb-empty" aria-hidden="true">
-                    🪶
+                    <Feather aria-hidden="true" size={18} strokeWidth={1.25} />
                   </span>
                 )}
               </span>
-              <span style={{ flex: 1 }}>
+              <span className="selected-bird-text">
                 <span className="picker-name">{chosen.com}</span>
                 <span className="picker-sci">{chosen.sci}</span>
               </span>
@@ -274,56 +292,48 @@ export default function AddPage() {
 
             <label>
               Where you saw it — optional
-              <div className="actions">
+              <div className="form-control-row">
+                <input
+                  type="text"
+                  value={place}
+                  onChange={(e) => setPlace(e.target.value)}
+                  placeholder="City, State"
+                  disabled={saving}
+                />
                 <button
                   type="button"
                   className="chip"
                   onClick={useMyLocation}
                   disabled={locating || saving}
                 >
-                  {locating
-                    ? "finding you…"
-                    : coords
-                      ? "location saved ✓"
-                      : "use my location"}
+                  {locating ? "finding your location…" : "use my current location"}
                 </button>
-                {coords && (
-                  <button
-                    type="button"
-                    className="chip"
-                    onClick={() => setCoords(null)}
-                  >
-                    clear
-                  </button>
-                )}
               </div>
-              <input
-                type="text"
-                value={place}
-                onChange={(e) => setPlace(e.target.value)}
-                placeholder="or name the spot — the pond at the park"
-                disabled={saving}
-              />
-              <span className="hint">
-                {coords
-                  ? `Pinned at ${coords.lat}, ${coords.lon}. It'll show on the map.`
-                  : "A pin puts it on the map. The name is what people read."}
-              </span>
             </label>
 
             <label>
               Its song — optional
+              <div className="form-control-row file-control-row">
+                <span className={song ? "file-name has-file" : "file-name"}>
+                  {song?.name ?? "No file yet"}
+                </span>
+                <button
+                  type="button"
+                  className="chip"
+                  onClick={() => fileBox.current?.click()}
+                  disabled={saving}
+                >
+                  choose an audio file
+                </button>
+              </div>
               <input
+                ref={fileBox}
+                className="sr-only"
                 type="file"
                 accept="audio/*"
                 onChange={(e) => setSong(e.target.files?.[0] ?? null)}
                 disabled={saving}
               />
-              <span className="hint">
-                {song
-                  ? `${song.name} — ${(song.size / 1024 / 1024).toFixed(1)} MB`
-                  : "A recording from your phone, so people can hear it too."}
-              </span>
             </label>
 
             <div className="actions">
@@ -333,7 +343,9 @@ export default function AddPage() {
                 disabled={saving}
               >
                 {saving
-                  ? song
+                  ? !chosen.art
+                    ? "creating the illustration…"
+                    : song
                     ? "uploading the song…"
                     : "adding…"
                   : "add to my collection"}

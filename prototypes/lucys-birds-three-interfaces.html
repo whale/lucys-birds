@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lucy’s Birds — Line Treatment Options</title>
+  <style>
+    :root { --paper:#fcfcfb; --paper2:#f4f3ef; --ink:#211f1c; --soft:#827b70; --line:#d9d5cd; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:Georgia,serif; }
+    button { font:inherit; color:inherit; }
+    .tabs { position:sticky; top:0; z-index:5; display:flex; justify-content:center; gap:28px; padding:16px; background:rgba(252,252,251,.95); border-bottom:1px solid var(--line); backdrop-filter:blur(10px); }
+    .tabs button { border:0; border-bottom:1px solid transparent; background:none; padding:5px 0; color:var(--soft); cursor:pointer; font:10px/1 ui-monospace,monospace; letter-spacing:.14em; text-transform:uppercase; }
+    .tabs button[aria-selected=true] { color:var(--ink); border-color:var(--ink); }
+    .screen { display:none; padding:clamp(24px,4vw,56px); animation:in .3s ease-out; }
+    .screen.active { display:block; }
+    @keyframes in { from { opacity:0; transform:translateY(4px); } }
+    .mast { display:flex; justify-content:space-between; align-items:end; padding-bottom:20px; border-bottom:1px solid var(--line); }
+    .eyebrow,.sci,.label,.count { color:var(--soft); }
+    .eyebrow,.label,.switch button,.count { font-family:ui-monospace,monospace; text-transform:uppercase; letter-spacing:.15em; }
+    .eyebrow { font-size:11px; font-style:italic; }
+    h1 { margin:2px 0 0; font-size:clamp(30px,4vw,56px); line-height:1; text-transform:uppercase; }
+    .count { font-size:10px; margin-top:10px; }
+    .switch { display:inline-flex; margin:30px 0 46px; }
+    .switch button { border:0; background:none; padding:11px 20px; font-size:9px; color:var(--soft); cursor:pointer; }
+    .switch button.active { color:var(--ink); }
+    .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:24px; }
+    .bird { text-align:center; }
+    .portrait { height:180px; display:grid; place-items:center; padding:20px; }
+    .portrait img { max-width:100%; max-height:100%; object-fit:contain; }
+    .name { display:block; margin-top:14px; font-size:17px; }
+    .sci { display:block; margin-top:3px; font-size:12px; font-style:italic; }
+    .detail { margin-top:70px; display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,.8fr); gap:48px; align-items:start; }
+    .figure { position:relative; aspect-ratio:4/3; display:grid; place-items:center; padding:30px; }
+    .figure img { max-width:74%; max-height:86%; object-fit:contain; }
+    .pose { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); display:flex; background:var(--paper); }
+    .pose button { border:0; background:none; padding:9px 14px; color:var(--soft); font:9px/1 ui-monospace,monospace; letter-spacing:.14em; text-transform:uppercase; }
+    .pose button.active { color:var(--ink); }
+    .detail h2 { margin:8px 0 4px; font-size:34px; line-height:1.05; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); margin-top:24px; }
+    .stat { padding:12px 14px; }
+    .value { display:block; font-weight:bold; font-size:17px; }
+    .label { display:block; font-size:8px; margin-top:5px; }
+
+    /* Option 1: complete hairline frames */
+    .one .switch { border:1px solid var(--line); }
+    .one .switch button + button,.one .pose button + button,.one .stat + .stat { border-left:1px solid var(--line); }
+    .one .switch .active,.one .pose .active { box-shadow:inset 0 -1px var(--ink); }
+    .one .portrait,.one .figure { border:1px solid var(--line); }
+    .one .stats { border:1px solid var(--line); }
+    .one .pose { border:1px solid var(--line); }
+
+    /* Option 2: open top and bottom rules */
+    .two .switch,.two .pose,.two .stats { border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .two .switch button + button,.two .pose button + button,.two .stat + .stat { border-left:1px solid var(--line); }
+    .two .switch .active,.two .pose .active { box-shadow:inset 0 -1px var(--ink); }
+    .two .portrait,.two .figure { border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+
+    /* Option 3: corner and baseline details */
+    .three .switch { border-bottom:1px solid var(--line); }
+    .three .switch button.active,.three .pose button.active { border-bottom:1px solid var(--ink); margin-bottom:-1px; }
+    .three .portrait,.three .figure { position:relative; background:linear-gradient(var(--line),var(--line)) left top/28px 1px no-repeat,linear-gradient(var(--line),var(--line)) left top/1px 28px no-repeat,linear-gradient(var(--line),var(--line)) right bottom/28px 1px no-repeat,linear-gradient(var(--line),var(--line)) right bottom/1px 28px no-repeat; }
+    .three .pose { border-bottom:1px solid var(--line); }
+    .three .stats { border-bottom:1px solid var(--line); }
+    .three .stat + .stat { border-left:1px solid var(--line); }
+
+    @media(max-width:760px){ .tabs{justify-content:flex-start;overflow:auto;gap:20px}.screen{padding:24px 16px}.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr;gap:24px}.mast{align-items:start;flex-direction:column;gap:12px}.portrait{height:150px}.stat{padding:10px 8px}.value{font-size:14px} }
+    @media(prefers-reduced-motion:reduce){.screen{animation:none}}
+  </style>
+</head>
+<body>
+  <nav class="tabs" role="tablist" aria-label="Line options">
+    <button role="tab" aria-selected="true" aria-controls="one">01 Framed</button>
+    <button role="tab" aria-selected="false" aria-controls="two">02 Ruled</button>
+    <button role="tab" aria-selected="false" aria-controls="three">03 Corner marks</button>
+  </nav>
+  <main id="screens"></main>
+  <template id="view-template">
+    <section class="screen" role="tabpanel">
+      <header class="mast"><div><span class="eyebrow">Lucy’s</span><h1>Bird collection</h1><div class="count">71 species</div></div><span class="count">Add a bird</span></header>
+      <div class="switch"><button class="active">Grid</button><button>Collage</button><button>Map</button></div>
+      <div class="grid">
+        <div class="bird"><div class="portrait"><img src="../public/illustrations/regulus-satrapa.png" alt="Golden-crowned Kinglet"></div><span class="name">Golden-crowned Kinglet</span><span class="sci">Regulus satrapa</span></div>
+        <div class="bird"><div class="portrait"><span aria-label="Illustration pending">🪶</span></div><span class="name">American Herring Gull</span><span class="sci">Larus smithsonianus</span></div>
+        <div class="bird"><div class="portrait"><img src="../public/illustrations/larus-marinus.png" alt="Great Black-backed Gull"></div><span class="name">Great Black-backed Gull</span><span class="sci">Larus marinus</span></div>
+        <div class="bird"><div class="portrait"><img src="../public/illustrations/nannopterum-auritum.png" alt="Double-crested Cormorant"></div><span class="name">Double-crested Cormorant</span><span class="sci">Nannopterum auritum</span></div>
+      </div>
+      <div class="detail">
+        <div class="figure"><img src="../public/illustrations/nannopterum-auritum.png" alt="Double-crested Cormorant"><div class="pose"><button class="active">Perched</button><button>In flight</button></div></div>
+        <div><span class="eyebrow">Bird detail</span><h2>Double-crested Cormorant</h2><span class="sci">Nannopterum auritum</span><div class="stats"><div class="stat"><span class="value">0</span><span class="label">Recordings</span></div><div class="stat"><span class="value">Jul 29, 2026</span><span class="label">Added</span></div><div class="stat"><span class="value">Nannopterum</span><span class="label">Genus</span></div></div></div>
+      </div>
+    </section>
+  </template>
+  <script>
+    const host=document.getElementById('screens'),tpl=document.getElementById('view-template');
+    ['one','two','three'].forEach((id,i)=>{const node=tpl.content.firstElementChild.cloneNode(true);node.id=id;node.classList.add(id);if(i===0)node.classList.add('active');host.append(node)});
+    const tabs=[...document.querySelectorAll('[role=tab]')],screens=[...document.querySelectorAll('[role=tabpanel]')];
+    function show(tab){tabs.forEach(t=>t.setAttribute('aria-selected',String(t===tab)));screens.forEach(s=>s.classList.toggle('active',s.id===tab.getAttribute('aria-controls')))}
+    tabs.forEach((tab,i)=>{tab.onclick=()=>show(tab);tab.onkeydown=e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const n=tabs[(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length];n.focus();show(n)}});
+  </script>
+</body>
+</html>

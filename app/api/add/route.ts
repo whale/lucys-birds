@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { RECORDINGS_BUCKET, serviceClient } from "@/lib/supabase";
 import { findSpecies } from "@/lib/species";
+import { generateBirdArt } from "@/lib/generated-art";
 
 // Add a bird to the collection, and if a song came with it, hand back a
 // one-time link to upload it straight to storage.
@@ -11,6 +12,7 @@ import { findSpecies } from "@/lib/species";
 // plays nothing.
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 type Body = {
   sciName?: string;
@@ -53,6 +55,12 @@ export async function POST(request: Request) {
 
   const supabase = serviceClient();
 
+  const { data: existing } = await supabase
+    .from("birds")
+    .select("id, art_url")
+    .eq("sci_name", species.sci)
+    .maybeSingle();
+
   // A bird is on the list once. Adding it again is not an error — she may just
   // be coming back to attach a song — so return the existing row either way.
   const { data: bird, error } = await supabase
@@ -72,7 +80,7 @@ export async function POST(request: Request) {
       },
       { onConflict: "sci_name" },
     )
-    .select("id, com_name")
+    .select("id, com_name, art_url")
     .single();
 
   if (error || !bird) {
@@ -81,6 +89,30 @@ export async function POST(request: Request) {
       { error: "That didn't save. Check your signal and try again." },
       { status: 502 },
     );
+  }
+
+  // Bundled species already have their two illustrations. Anything else is
+  // illustrated now, before the add is reported as complete, so the collection
+  // never flashes the old feather-and-rules placeholder for a newly added bird.
+  if (!species.art && !bird.art_url) {
+    try {
+      await generateBirdArt({
+        birdId: bird.id,
+        sciName: species.sci,
+        comName: species.com,
+        origin: new URL(request.url).origin,
+      });
+    } catch (cause) {
+      console.error("bird illustration generation failed", cause);
+      // If this request created the bird, keep the collection clean rather than
+      // publishing a half-created record. Existing rows remain so they can be
+      // repaired without losing their location or recordings.
+      if (!existing) await supabase.from("birds").delete().eq("id", bird.id);
+      return NextResponse.json(
+        { error: cause instanceof Error ? cause.message : "The illustration could not be created." },
+        { status: 502 },
+      );
+    }
   }
 
   if (!body.withAudio) {

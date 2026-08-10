@@ -72,7 +72,7 @@ export function isCorrectPasscode(submitted: string): boolean {
       "Missing GATE_PASSCODE. Set it before anyone can unlock the app.",
     );
   }
-  return safeEqual(submitted.trim(), expected);
+  return safeEqual(submitted.trim(), expected.trim());
 }
 
 /**

@@ -48,25 +48,38 @@ const SITE =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://lucys-birds.vercel.app";
 
 export default async function Image() {
-  let birds: Array<{ sci_name: string }> = [];
+  let birds: Array<{ sci_name: string; art_url: string | null }> = [];
   let total = 0;
   let withSongs = 0;
 
   try {
     const { data } = await serviceClient()
       .from("collection")
-      .select("sci_name, audio_path");
+      .select("sci_name, audio_path, art_url");
     const rows = data ?? [];
     total = rows.length;
     withSongs = rows.filter((r) => r.audio_path).length;
-    birds = rows.filter((r) => ILLUSTRATED.has(r.sci_name)).slice(0, 5);
+    birds = rows.filter((r) => ILLUSTRATED.has(r.sci_name) || r.art_url).slice(0, 5);
   } catch (cause) {
     // A share card is not worth failing over — fall back to the plain version.
     console.error("opengraph-image query failed", cause);
   }
 
   const portraits = (
-    await Promise.all(birds.map((b) => inline(SITE, b.sci_name)))
+    await Promise.all(
+      birds.map(async (b) => {
+        if (!b.art_url) return inline(SITE, b.sci_name);
+        try {
+          const response = await fetch(b.art_url);
+          if (!response.ok) return null;
+          const mime = response.headers.get("content-type") ?? "image/png";
+          const buffer = Buffer.from(await response.arrayBuffer());
+          return `data:${mime};base64,${buffer.toString("base64")}`;
+        } catch {
+          return null;
+        }
+      }),
+    )
   ).filter((src): src is string => Boolean(src));
 
   return new ImageResponse(

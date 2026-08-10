@@ -1,0 +1,146 @@
+@font-face {
+  font-family: MenloFallback;
+  src: local("Menlo");
+}
+
+:root {
+  --paper: #fcfcfb;
+  --ink: #1a1612;
+  --soft: #908576;
+  --line: #d9d9d9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: "Newsreader", Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.home {
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.portrait-wrap {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.portrait {
+  display: block;
+  width: min(52vw, 800px);
+  max-width: 100%;
+  max-height: calc(100svh - 250px);
+  aspect-ratio: 1125 / 1398;
+  background-image: url("assets/lucy.png");
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.intro {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 48px 24px 32px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 24px;
+  color: var(--soft);
+  font: 400 16px/18px MenloFallback, Menlo, monospace;
+  letter-spacing: 1.08px;
+  text-box-edge: cap alphabetic;
+  text-box-trim: trim-both;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 48px;
+  font: 400 clamp(48px, 5vw, 76px)/1 "Newsreader", Georgia, serif;
+  letter-spacing: -0.01em;
+  text-box-edge: cap alphabetic;
+  text-box-trim: trim-both;
+}
+
+.bird-link {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 16px 10px;
+  border: 1px solid var(--soft);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 11px/10px MenloFallback, Menlo, monospace;
+  letter-spacing: 1.43px;
+  text-decoration: none;
+  text-box-edge: cap alphabetic;
+  text-box-trim: trim-both;
+  text-transform: uppercase;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.bird-link:hover {
+  background: var(--ink);
+  color: var(--paper);
+  transform: translateY(-2px);
+}
+
+.bird-link:active {
+  transform: translateY(0);
+}
+
+.bird-link:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .portrait {
+    width: min(92vw, 560px);
+    max-height: calc(100svh - 230px);
+  }
+
+  .intro {
+    padding: 36px 20px 28px;
+  }
+
+  .eyebrow {
+    margin-bottom: 18px;
+    font-size: 13px;
+  }
+
+  h1 {
+    margin-bottom: 32px;
+    font-size: clamp(42px, 13vw, 64px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bird-link {
+    transition: none;
+  }
+}

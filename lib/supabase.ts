@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 // module must never be imported from a "use client" file. Next.js will not stop
 // you — the import just silently ships the key to the browser.
 export const RECORDINGS_BUCKET = "recordings";
+export const ILLUSTRATIONS_BUCKET = "illustrations";
 
 function required(name: string): string {
   const value = process.env[name];

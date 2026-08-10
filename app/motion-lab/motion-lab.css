@@ -1,0 +1,154 @@
+.motion-study {
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-drawer: cubic-bezier(.32, .72, 0, 1);
+  min-height: 100vh;
+}
+
+.motion-review-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  min-height: 68px;
+  padding: 8px var(--gutter);
+  border-bottom: 1px solid var(--hairline);
+  background: rgba(252, 252, 251, .97);
+}
+.motion-scope { display: flex; align-self: stretch; }
+.motion-scope button, .motion-review-detail button, .motion-review-detail > span, .motion-replay {
+  font: 10px/1.2 var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.motion-scope button { position: relative; padding: 0 14px; border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; }
+.motion-scope button:first-child { padding-left: 0; }
+.motion-scope button + button::before { content: ""; position: absolute; left: 0; top: 20px; bottom: 20px; width: 1px; background: var(--hairline); }
+.motion-scope button[aria-selected="true"] { color: var(--ink); }
+.motion-scope button[aria-selected="true"]::after { content: ""; position: absolute; right: 14px; bottom: 0; left: 14px; height: 1px; background: var(--ink); }
+.motion-scope button:first-child[aria-selected="true"]::after { left: 0; }
+.motion-review-detail { min-width: 0; }
+.motion-review-detail nav { display: flex; justify-content: center; min-width: 0; }
+.motion-review-detail button { padding: 8px 13px 7px; border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; }
+.motion-review-detail button:hover, .motion-review-detail button[aria-current="true"] { color: var(--ink); }
+.motion-review-detail button[aria-current="true"] { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; }
+.motion-review-detail > span { display: block; margin-top: 4px; color: var(--ink-soft); font-size: 8px; text-align: center; }
+.motion-replay { display: inline-flex; align-items: center; gap: 7px; padding: 9px 12px 8px; border: 1px solid var(--ink-soft); border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; transition: background-color 150ms ease, transform 120ms ease; }
+.motion-replay:hover { background: var(--paper-2); }.motion-replay:active { transform: scale(.97); }
+
+/* During drawer studies, the grid is intentionally still. During load studies,
+   the drawer retains the production animation so the two questions stay separate. */
+.study-load .tray { transition: transform 270ms var(--motion-drawer); }
+
+/* LOAD 01: a constant-speed field scan. The rule is linear on purpose: it is
+   a measuring action, not an object easing into rest. Each row resolves as the
+   line reaches it. */
+.study-load.load-scan .page::after {
+  content: "";
+  position: fixed;
+  z-index: 30;
+  top: 68px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--ink-soft);
+  opacity: .45;
+  pointer-events: none;
+  animation: field-scan 760ms linear forwards;
+}
+.study-load.load-scan .flock .bird { opacity: 0; clip-path: inset(0 0 100% 0); animation: scan-uncover 250ms linear forwards; }
+.study-load.load-scan .flock .bird:nth-child(-n+6) { animation-delay: 250ms; }
+.study-load.load-scan .flock .bird:nth-child(n+7):nth-child(-n+12) { animation-delay: 430ms; }
+.study-load.load-scan .flock .bird:nth-child(n+13) { animation-delay: 610ms; }
+
+/* LOAD 02: birds move as a loose flock, while labels remain stable until the
+   illustration settles. Direction varies by column rather than randomly. */
+.study-load.load-flock .flock .portrait { opacity: 0; animation: flock-settle 420ms var(--motion-ease) forwards; }
+.study-load.load-flock .flock .bird:nth-child(5n+1) .portrait { --flock-x: -22px; --flock-y: 9px; }
+.study-load.load-flock .flock .bird:nth-child(5n+2) .portrait { --flock-x: -10px; --flock-y: -8px; animation-delay: 35ms; }
+.study-load.load-flock .flock .bird:nth-child(5n+3) .portrait { --flock-x: 0px; --flock-y: 12px; animation-delay: 70ms; }
+.study-load.load-flock .flock .bird:nth-child(5n+4) .portrait { --flock-x: 11px; --flock-y: -6px; animation-delay: 35ms; }
+.study-load.load-flock .flock .bird:nth-child(5n+5) .portrait { --flock-x: 23px; --flock-y: 8px; }
+.study-load.load-flock .flock .com, .study-load.load-flock .flock .sci, .study-load.load-flock .flock .song-flag { opacity: 0; animation: simple-opacity 180ms ease 250ms forwards; }
+
+/* LOAD 03: blur masks the visual swap between absent and detailed pigment.
+   The movement is only 2%, so the effect reads as focus rather than zoom. */
+.study-load.load-ink .flock .portrait { opacity: 0; filter: blur(7px) saturate(.6); transform: scale(.98); animation: ink-develop 480ms var(--motion-ease) forwards; }
+.study-load.load-ink .flock .bird:nth-child(3n+2) .portrait { animation-delay: 45ms; }
+.study-load.load-ink .flock .bird:nth-child(3n) .portrait { animation-delay: 90ms; }
+.study-load.load-ink .flock .com, .study-load.load-ink .flock .sci { opacity: 0; animation: simple-opacity 180ms ease 190ms forwards; }
+
+/* LOAD 04: the collection's taxonomy establishes position before the art.
+   Text rises one cap-height, then portraits are uncovered vertically. */
+.study-load.load-index .flock .com, .study-load.load-index .flock .sci { opacity: 0; transform: translateY(7px); animation: index-label 230ms var(--motion-ease) forwards; }
+.study-load.load-index .flock .sci { animation-delay: 45ms; }
+.study-load.load-index .flock .portrait { opacity: 0; clip-path: inset(100% 0 0 0); animation: index-portrait 360ms var(--motion-ease) 110ms forwards; }
+.study-load.load-index .flock .bird:nth-child(2n) .portrait { animation-delay: 155ms; }
+
+/* DRAWER 01: the most direct spatial model. CSS transitions allow an opening
+   drawer to reverse smoothly if Close is clicked before it finishes. */
+.study-drawer.drawer-direct .tray { transition: transform 250ms var(--motion-drawer); }
+.study-drawer.drawer-direct .tray:not(.is-open) { transition-duration: 185ms; }
+.study-drawer.drawer-direct .tray.is-open .tray-body { opacity: 0; transform: translateX(9px); animation: direct-content 190ms var(--motion-ease) 55ms forwards; }
+
+/* DRAWER 02: a linear leading rule gives the reveal a physical paper edge.
+   The sheet itself uses a clipped reveal with no scaling. */
+.study-drawer.drawer-paper .tray { transform: translateX(0); clip-path: inset(0 0 0 100%); pointer-events: none; transition: clip-path 300ms linear; }
+.study-drawer.drawer-paper .tray.is-open { clip-path: inset(0 0 0 0); pointer-events: auto; }
+.study-drawer.drawer-paper .tray::before { content: ""; position: absolute; z-index: 5; top: 0; bottom: 0; left: 0; width: 1px; background: var(--ink-soft); opacity: 0; }
+.study-drawer.drawer-paper .tray.is-open::before { opacity: 1; animation: paper-edge 300ms linear forwards; }
+.study-drawer.drawer-paper .tray.is-open .tray-body { opacity: 0; animation: simple-opacity 150ms ease 105ms forwards; }
+
+/* DRAWER 03: a small blur bridges two visually dense states. It stays under
+   4px and disappears early to keep Safari paint work bounded. */
+.study-drawer.drawer-focus .tray { opacity: 0; filter: blur(4px); transform: scale(.985); transform-origin: right center; pointer-events: none; transition: opacity 170ms ease, transform 230ms var(--motion-ease), filter 170ms ease; }
+.study-drawer.drawer-focus .tray.is-open { opacity: 1; filter: blur(0); transform: scale(1); pointer-events: auto; }
+.study-drawer.drawer-focus .tray:not(.is-open) { transition-duration: 130ms, 170ms, 120ms; }
+.study-drawer.drawer-focus .tray.is-open .tray-figure { opacity: 0; filter: blur(2px); animation: focus-detail 210ms ease 50ms forwards; }
+
+/* DRAWER 04: the illustration is the hero moment. Controls, naming, facts,
+   prose, map, and recordings then assemble in reading order. */
+.study-drawer.drawer-specimen .tray { transition: transform 270ms var(--motion-drawer); }
+.study-drawer.drawer-specimen .tray:not(.is-open) { transition-duration: 190ms; }
+.study-drawer.drawer-specimen .tray.is-open .tray-bar { opacity: 0; transform: translateY(-8px); animation: content-y 190ms var(--motion-ease) 15ms forwards; }
+.study-drawer.drawer-specimen .tray.is-open .tray-figure { opacity: 0; transform: scale(.96); animation: specimen-art 270ms var(--motion-ease) 35ms forwards; }
+.study-drawer.drawer-specimen .tray.is-open .tray-name { opacity: 0; transform: translateX(-12px); animation: content-x 210ms var(--motion-ease) 105ms forwards; }
+.study-drawer.drawer-specimen .tray.is-open .stat-row { opacity: 0; transform: translateY(8px); animation: content-y 210ms var(--motion-ease) 140ms forwards; }
+.study-drawer.drawer-specimen .tray.is-open .desc, .study-drawer.drawer-specimen .tray.is-open .desc-source { opacity: 0; transform: translateY(8px); animation: content-y 210ms var(--motion-ease) 170ms forwards; }
+.study-drawer.drawer-specimen .tray.is-open .spot-map, .study-drawer.drawer-specimen .tray.is-open .recordings { opacity: 0; transform: translateY(8px); animation: content-y 210ms var(--motion-ease) 200ms forwards; }
+
+@keyframes field-scan { 0% { transform: translateY(0); opacity: 0; } 8% { opacity: .45; } 92% { opacity: .45; } 100% { transform: translateY(calc(100vh - 69px)); opacity: 0; } }
+@keyframes scan-uncover { to { opacity: 1; clip-path: inset(0 0 0 0); } }
+@keyframes flock-settle { from { opacity: 0; transform: translate(var(--flock-x), var(--flock-y)) scale(.97); } to { opacity: 1; transform: translate(0, 0) scale(1); } }
+@keyframes ink-develop { to { opacity: 1; filter: blur(0) saturate(1); transform: scale(1); } }
+@keyframes index-label { to { opacity: 1; transform: translateY(0); } }
+@keyframes index-portrait { to { opacity: 1; clip-path: inset(0 0 0 0); } }
+@keyframes simple-opacity { to { opacity: 1; } }
+@keyframes direct-content { to { opacity: 1; transform: translateX(0); } }
+@keyframes paper-edge { from { transform: translateX(0); } to { transform: translateX(746px); opacity: 0; } }
+@keyframes focus-detail { to { opacity: 1; filter: blur(0); } }
+@keyframes content-y { to { opacity: 1; transform: translateY(0); } }
+@keyframes content-x { to { opacity: 1; transform: translateX(0); } }
+@keyframes specimen-art { to { opacity: 1; transform: scale(1); } }
+
+@media (max-width: 1100px) {
+  .motion-review-bar { grid-template-columns: 1fr auto; gap: 6px 14px; }
+  .motion-review-detail { grid-row: 2; grid-column: 1 / -1; }
+  .motion-review-detail nav { justify-content: flex-start; overflow-x: auto; }
+  .motion-review-detail > span { text-align: left; padding-left: 13px; }
+}
+@media (max-width: 620px) {
+  .motion-scope button { padding-inline: 9px; font-size: 9px; }
+  .motion-review-detail button { padding-inline: 9px; }
+  .motion-review-detail > span { display: none; }
+  .motion-replay { font-size: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-study .page::after,
+  .motion-study .flock *,
+  .motion-study .tray,
+  .motion-study .tray *,
+  .motion-study .tray-scrim { animation: none !important; transition-duration: .01ms !important; transition-delay: 0ms !important; filter: none !important; clip-path: none !important; opacity: 1 !important; transform: none !important; }
+}

@@ -1,16 +1,16 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 const CODE_LENGTH = 6;
 
 function UnlockForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const fields = useRef<Array<HTMLInputElement | null>>([]);
 
   // Only relative paths. An absolute URL here would let someone craft a link
   // that sends Lucy somewhere else the moment she unlocks.
@@ -28,8 +28,11 @@ function UnlockForm() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "That didn't work.");
-      router.replace(next);
-      router.refresh();
+      // A full navigation guarantees the newly issued httpOnly cookie is sent
+      // through middleware before the protected page renders. Calling
+      // router.refresh() immediately after replace could refresh this unlock
+      // route before the route change completed.
+      window.location.assign(next);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
       setPasscode("");
@@ -38,12 +41,23 @@ function UnlockForm() {
     }
   }
 
-  function onChange(value: string) {
-    // Digits only, so a stray character can't sit invisibly in the field.
-    const digits = value.replace(/\D/g, "").slice(0, CODE_LENGTH);
+  function updateDigit(index: number, value: string) {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const next = passcode.padEnd(CODE_LENGTH, " ").split("");
+    next[index] = digit || " ";
+    const digits = next.join("").trimEnd();
     setPasscode(digits);
     setError(null);
-    // Submits itself on the sixth digit — there's nothing left to decide.
+    if (digit && index < CODE_LENGTH - 1) fields.current[index + 1]?.focus();
+    if (digits.length === CODE_LENGTH) void submit(digits);
+  }
+
+  function pasteDigits(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, CODE_LENGTH);
+    if (!digits) return;
+    setPasscode(digits);
+    setError(null);
+    fields.current[Math.min(digits.length, CODE_LENGTH) - 1]?.focus();
     if (digits.length === CODE_LENGTH) void submit(digits);
   }
 
@@ -59,21 +73,33 @@ function UnlockForm() {
         </h1>
       </div>
 
-      <input
-        className="code-input"
-        // A numeric keypad on a phone, and no autocorrect or spellcheck noise.
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        autoComplete="one-time-code"
-        maxLength={CODE_LENGTH}
-        placeholder="······"
-        aria-label={`${CODE_LENGTH} digit passcode`}
-        value={passcode}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={checking}
-        autoFocus
-      />
+      <div className="code-fields" aria-label={`${CODE_LENGTH} digit passcode`}>
+        {Array.from({ length: CODE_LENGTH }, (_, index) => (
+          <input
+            key={index}
+            ref={(element) => { fields.current[index] = element; }}
+            className="code-digit"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete={index === 0 ? "one-time-code" : "off"}
+            maxLength={1}
+            aria-label={`Digit ${index + 1}`}
+            value={passcode[index] ?? ""}
+            onChange={(event) => updateDigit(index, event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Backspace" && !passcode[index] && index > 0)
+                fields.current[index - 1]?.focus();
+            }}
+            onPaste={(event) => {
+              event.preventDefault();
+              pasteDigits(event.clipboardData.getData("text"));
+            }}
+            disabled={checking}
+            autoFocus={index === 0}
+          />
+        ))}
+      </div>
 
       <p className="hint">
         {checking

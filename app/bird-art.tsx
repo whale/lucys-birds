@@ -29,11 +29,11 @@ export function BirdArt({
       role="img"
       aria-label={label}
       style={{
-        ...style,
         backgroundImage: `url(${src})`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center bottom",
         backgroundSize: "contain",
+        ...style,
       }}
     />
   );

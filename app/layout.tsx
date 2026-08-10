@@ -45,6 +45,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>{children}</body>
+      <script
+        src="https://mcp.figma.com/mcp/html-to-design/capture.js"
+        async
+      />
     </html>
   );
 }

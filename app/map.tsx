@@ -30,6 +30,9 @@ export function BirdMap({
   openRef.current = onOpen;
 
   const located = birds.filter((b) => b.lat != null && b.lon != null);
+  const locationKey = located
+    .map((b) => `${b.id}:${b.lat}:${b.lon}`)
+    .join(",");
 
   useEffect(() => {
     if (!host.current || located.length === 0) return;
@@ -44,7 +47,16 @@ export function BirdMap({
       await import("leaflet.markercluster");
       if (cancelled || !host.current) return;
 
-      map = L.map(host.current, { scrollWheelZoom: false });
+      map = L.map(host.current, {
+        // Touch screens use two-finger pinch; Mac trackpads report their pinch
+        // gesture through the wheel-zoom path. Both need to be enabled.
+        touchZoom: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        dragging: true,
+        zoomControl: true,
+        zoomAnimation: true,
+      });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
@@ -58,9 +70,10 @@ export function BirdMap({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         iconCreateFunction: (group: any) =>
           L.divIcon({
-            html: `<span>${group.getChildCount()}</span>`,
+            html: String(group.getChildCount()),
             className: "bird-cluster",
             iconSize: L.point(38, 38),
+            iconAnchor: L.point(19, 19),
           }),
       });
 
@@ -72,7 +85,7 @@ export function BirdMap({
         // inject anything.
         const art = document.createElement("span");
         art.className = "bird-pin-art";
-        art.style.backgroundImage = `url("${encodeURI(perchedSrc(bird.sciName))}")`;
+        art.style.backgroundImage = `url("${encodeURI(bird.artUrl ?? perchedSrc(bird.sciName))}")`;
         art.setAttribute("role", "img");
         art.setAttribute("aria-label", bird.comName);
 
@@ -105,11 +118,7 @@ export function BirdMap({
       map?.remove();
     };
     // Rebuild only when the located set actually changes.
-  }, [
-    located.map((b) => `${b.id}:${b.lat}:${b.lon}`).join(","),
-    birds,
-    located,
-  ]);
+  }, [locationKey]);
 
   if (located.length === 0) {
     return (
@@ -132,5 +141,75 @@ export function BirdMap({
         {located.length} of {birds.length} birds have a place
       </p>
     </>
+  );
+}
+
+/** Compact location map used inside the featured-bird panel. */
+export function BirdSpotMap({
+  bird,
+  birds,
+}: {
+  bird: GalleryBird;
+  birds: GalleryBird[];
+}) {
+  const host = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!host.current || bird.lat == null || bird.lon == null) return;
+    let map: import("leaflet").Map | null = null;
+    let cancelled = false;
+
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (cancelled || !host.current) return;
+
+      map = L.map(host.current, {
+        touchZoom: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        dragging: true,
+        zoomControl: false,
+        attributionControl: true,
+      }).setView([bird.lat as number, bird.lon as number], 8);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 19,
+      }).addTo(map);
+
+      const nearbyCount = birds.filter(
+        (item) =>
+          item.lat != null &&
+          item.lon != null &&
+          Math.abs(item.lat - (bird.lat as number)) < 0.03 &&
+          Math.abs(item.lon - (bird.lon as number)) < 0.03,
+      ).length;
+
+      const icon = L.divIcon({
+        html: String(Math.max(1, nearbyCount)),
+        className: "bird-cluster spot-cluster",
+        iconSize: L.point(30, 30),
+        iconAnchor: L.point(15, 15),
+      });
+      L.marker([bird.lat as number, bird.lon as number], { icon }).addTo(map);
+    })();
+
+    return () => {
+      cancelled = true;
+      map?.remove();
+    };
+  }, [bird.id, bird.lat, bird.lon, birds]);
+
+  if (bird.lat == null || bird.lon == null) return null;
+
+  return (
+    <section className="spot-map">
+      <h3>
+        Spotted{bird.place ? ` in ${bird.place}` : " here"}
+      </h3>
+      <div className="spot-map-frame">
+        <div className="spot-map-canvas" ref={host} />
+      </div>
+    </section>
   );
 }
