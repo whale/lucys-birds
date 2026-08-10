@@ -250,6 +250,7 @@ export function Tray({
                 >
                   {bird.art ? (
                     <BirdArt
+                      key={showFlight ? "flight" : "perched"}
                       src={showFlight
                         ? bird.flightArtUrl ?? flightSrc(bird.sciName)
                         : bird.artUrl ?? perchedSrc(bird.sciName)}

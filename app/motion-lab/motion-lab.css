@@ -42,6 +42,20 @@
    the drawer retains the production animation so the two questions stay separate. */
 .study-load .tray { transition: transform 270ms var(--motion-drawer); }
 
+/* LOAD 01: the recommended field-guide assembly. Positions are already final;
+   only the specimen layers settle, so the collection never reflows. */
+.study-load.load-assembly .flock .portrait {
+  opacity: 0;
+  animation: field-assembly 520ms linear(0, .34, .72, .94, 1.025, 1.008, 1) forwards;
+}
+.study-load.load-assembly .flock .bird:nth-child(5n+1) .portrait { transform-origin: 85% 50%; }
+.study-load.load-assembly .flock .bird:nth-child(5n+2) .portrait { animation-delay: 26ms; transform-origin: 70% 50%; }
+.study-load.load-assembly .flock .bird:nth-child(5n+3) .portrait { animation-delay: 52ms; transform-origin: 50% 50%; }
+.study-load.load-assembly .flock .bird:nth-child(5n+4) .portrait { animation-delay: 78ms; transform-origin: 30% 50%; }
+.study-load.load-assembly .flock .bird:nth-child(5n) .portrait { animation-delay: 104ms; transform-origin: 15% 50%; }
+.study-load.load-assembly .flock .com,
+.study-load.load-assembly .flock .sci { opacity: 0; animation: simple-opacity 170ms linear 150ms forwards; }
+
 /* LOAD 01: a constant-speed field scan. The rule is linear on purpose: it is
    a measuring action, not an object easing into rest. Each row resolves as the
    line reaches it. */
@@ -93,6 +107,24 @@
 .study-drawer.drawer-direct .tray:not(.is-open) { transition-duration: 185ms; }
 .study-drawer.drawer-direct .tray.is-open .tray-body { opacity: 0; transform: translateX(9px); animation: direct-content 190ms var(--motion-ease) 55ms forwards; }
 
+/* DRAWER 01: a low-bounce sampled spring makes the sheet physical without
+   feeling playful. Atmospheric opacity remains linear and finishes first. */
+.study-drawer.drawer-fieldguide .tray {
+  transition: transform 560ms linear(0, .18, .49, .76, .93, 1.018, 1.012, 1);
+}
+.study-drawer.drawer-fieldguide .tray:not(.is-open) { transition: transform 210ms cubic-bezier(.4, 0, 1, 1); }
+.study-drawer.drawer-fieldguide .tray-scrim { transition: opacity 160ms linear; }
+.study-drawer.drawer-fieldguide .tray.is-open .tray-bar { opacity: 0; animation: simple-opacity 150ms linear 50ms forwards; }
+.study-drawer.drawer-fieldguide .tray.is-open .tray-figure { opacity: 0; transform: scale(.985); animation: fieldguide-art 360ms linear(0, .35, .73, .96, 1.015, 1) 70ms forwards; }
+.study-drawer.drawer-fieldguide .tray.is-open .tray-name,
+.study-drawer.drawer-fieldguide .tray.is-open .stat-row { opacity: 0; transform: translateY(6px); animation: content-y 210ms var(--motion-ease) 125ms forwards; }
+.study-drawer.drawer-fieldguide .tray.is-open .desc,
+.study-drawer.drawer-fieldguide .tray.is-open .desc-source,
+.study-drawer.drawer-fieldguide .tray.is-open .spot-map,
+.study-drawer.drawer-fieldguide .tray.is-open .recordings,
+.study-drawer.drawer-fieldguide .tray.is-open .actions,
+.study-drawer.drawer-fieldguide .tray.is-open .catalogue-actions { opacity: 0; transform: translateY(6px); animation: content-y 210ms var(--motion-ease) 170ms forwards; }
+
 /* DRAWER 02: a linear leading rule gives the reveal a physical paper edge.
    The sheet itself uses a clipped reveal with no scaling. */
 .study-drawer.drawer-paper .tray { transform: translateX(0); clip-path: inset(0 0 0 100%); pointer-events: none; transition: clip-path 300ms linear; }
@@ -132,6 +164,33 @@
 @keyframes content-y { to { opacity: 1; transform: translateY(0); } }
 @keyframes content-x { to { opacity: 1; transform: translateX(0); } }
 @keyframes specimen-art { to { opacity: 1; transform: scale(1); } }
+@keyframes field-assembly { from { opacity: 0; transform: scale(.965); } to { opacity: 1; transform: scale(1); } }
+@keyframes fieldguide-art { to { opacity: 1; transform: scale(1); } }
+
+/* ---------------------------------------------------------------- pose study */
+.study-pose .page { max-width: 860px; }
+.pose-review { padding-top: clamp(28px, 5vw, 64px); }
+.pose-review .tray-figure { aspect-ratio: 1.15 / 1; margin-bottom: 28px; }
+.pose-review .tray-art { position: relative; overflow: hidden; }
+.pose-review-layer { position: absolute; inset: 0; display: grid; place-items: center; }
+.pose-review-layer > [role="img"] { display: block; width: 88%; height: 88%; background-position: center !important; }
+.pose-review .tray-name { font-size: clamp(52px, 8vw, 84px); }
+.motion-instruction { margin: 14px 0 0; font: 10px/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+
+/* ---------------------------------------------------------------- map study */
+.study-map .masthead-map + .birdmap { margin-top: 28px; }
+.study-map .birdmap .bird-pin-art { transform-origin: center bottom; }
+.study-map.map-plot .birdmap .bird-pin-art { opacity: 0; animation: marker-plot 460ms linear(0, .28, .66, .93, 1.04, 1) forwards; }
+.study-map.map-plot .birdmap .leaflet-marker-icon:nth-child(3n+2) .bird-pin-art { animation-delay: 55ms; }
+.study-map.map-plot .birdmap .leaflet-marker-icon:nth-child(3n) .bird-pin-art { animation-delay: 110ms; }
+.study-map.map-radiate .birdmap .bird-pin-art { opacity: 0; animation: marker-radiate 420ms cubic-bezier(.22, 1, .36, 1) forwards; }
+.study-map.map-radiate .birdmap .leaflet-marker-icon:nth-child(2n) .bird-pin-art { --marker-x: 10px; --marker-y: -7px; animation-delay: 60ms; }
+.study-map.map-radiate .birdmap .leaflet-marker-icon:nth-child(3n) .bird-pin-art { --marker-x: -12px; --marker-y: 8px; animation-delay: 100ms; }
+.study-map.map-stamp .birdmap .bird-pin-art { opacity: 0; animation: marker-stamp 210ms cubic-bezier(.2, .7, .3, 1) forwards; }
+.study-map.map-quiet .birdmap .bird-pin-art { opacity: 0; animation: simple-opacity 260ms linear 260ms forwards; }
+@keyframes marker-plot { from { opacity: 0; transform: translateY(-8px) scale(.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes marker-radiate { from { opacity: 0; transform: translate(var(--marker-x, -8px), var(--marker-y, 6px)) scale(.96); } to { opacity: 1; transform: translate(0, 0) scale(1); } }
+@keyframes marker-stamp { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: scale(1); } }
 
 @media (max-width: 1100px) {
   .motion-review-bar { grid-template-columns: 1fr auto; gap: 6px 14px; }
@@ -140,7 +199,9 @@
   .motion-review-detail > span { text-align: left; padding-left: 13px; }
 }
 @media (max-width: 620px) {
-  .motion-scope button { padding-inline: 9px; font-size: 9px; }
+  .motion-review-bar { position: relative; }
+  .motion-scope { max-width: calc(100vw - 82px); overflow-x: auto; }
+  .motion-scope button { flex: 0 0 auto; padding-inline: 9px; font-size: 9px; }
   .motion-review-detail button { padding-inline: 9px; }
   .motion-review-detail > span { display: none; }
   .motion-replay { font-size: 0; }
