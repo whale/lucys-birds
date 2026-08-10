@@ -44,6 +44,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(document.referrer&&new URL(document.referrer).hostname==="lesmith.me")document.documentElement.classList.add("from-index")}catch(e){}`,
+          }}
+        />
+      </head>
       <body>{children}</body>
       <script
         src="https://mcp.figma.com/mcp/html-to-design/capture.js"

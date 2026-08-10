@@ -9,6 +9,9 @@
     <title>Lucy Smith</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://birds.lesmith.me" />
+    <link rel="dns-prefetch" href="https://birds.lesmith.me" />
+    <link rel="prefetch" href="https://birds.lesmith.me/" as="document" />
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -30,5 +33,18 @@
         </a>
       </section>
     </main>
+    <script>
+      const collectionLink = document.querySelector(".bird-link");
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      collectionLink.addEventListener("click", (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || reduceMotion.matches) return;
+        event.preventDefault();
+        document.body.classList.add("is-leaving");
+        window.setTimeout(() => window.location.assign(collectionLink.href), 150);
+      });
+
+      window.addEventListener("pageshow", () => document.body.classList.remove("is-leaving"));
+    </script>
   </body>
 </html>

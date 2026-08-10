@@ -33,6 +33,13 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
+  opacity: 1;
+  transition: opacity 150ms linear;
+}
+
+body.is-leaving .home {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .portrait-wrap {
@@ -140,7 +147,8 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bird-link {
+  .bird-link,
+  .home {
     transition: none;
   }
 }

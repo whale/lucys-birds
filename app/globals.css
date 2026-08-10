@@ -46,6 +46,22 @@ body {
   color: var(--ink);
 }
 
+/* A cross-domain navigation cannot share DOM elements. When the collection is
+   entered from lesmith.me, keep the paper color continuous and reveal the new
+   document quietly rather than letting browser and font paints read as flashes. */
+.from-index body {
+  animation: index-handoff-in 190ms linear both;
+}
+
+@keyframes index-handoff-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .from-index body { animation: none; }
+}
+
 body {
   font-family: var(--serif);
   -webkit-font-smoothing: antialiased;
