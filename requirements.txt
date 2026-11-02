@@ -15,5 +15,5 @@ inotify
 requests
 matplotlib
 pillow
-pyarrow==20.0.0
+pyarrow==23.0.1
 soundfile
