@@ -24,6 +24,9 @@ export function serviceClient() {
     required("SUPABASE_SERVICE_ROLE_KEY"),
     {
       auth: { persistSession: false },
+      // Tables live in the lucys_birds schema of the shared Belly project
+      // (moved 2026-11-09 to save a separate database's monthly cost).
+      db: { schema: "lucys_birds" },
     },
   );
 }

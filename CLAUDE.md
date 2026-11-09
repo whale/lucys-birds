@@ -24,7 +24,9 @@ Next.js 15 (App Router) on Vercel, Supabase for Postgres and audio storage. No P
 
 ## Data
 
-`supabase/migrations/`, already applied to project `lucys-birds` (ref `elmxrscgpdtiqgpltchm`, `hi-whalefyi's projects` org). Never edit an applied migration; add a new one and `supabase db push`.
+**Moved 2026-11-09:** the tables now live in the `lucys_birds` schema of the shared **Belly** project (ref `mmzhkvarvcqsaqkwfjwu`), not their own project. `lib/supabase.ts` sets `db: { schema: "lucys_birds" }`. The old project (`elmxrscgpdtiqgpltchm`) is retired; backup in `~/Backups/supabase-2026-11-09/`.
+
+`supabase/migrations/` is the history as written for the old project (it says `public`). New changes: write plain SQL against `lucys_birds.*` and run it on the Belly project. Do **not** `supabase db push` from here — this folder isn't linked to Belly, and Belly's own migrations live in `whale-belly`.
 
 - `birds` — one row per species, `sci_name` unique. Adding a bird twice is an upsert, not an error: she may be coming back to attach a song.
 - `bird_recordings` — audio, several allowed per bird, one `is_primary`. A partial unique index enforces the "one primary" rule so no code path can break it.
